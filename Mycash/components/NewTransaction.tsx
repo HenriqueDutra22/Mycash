@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Transaction, TransactionType, User } from '../types';
+import { Transaction, TransactionType, User } from '../../types';
 import Tesseract from 'tesseract.js';
 
 interface NewTransactionProps {
