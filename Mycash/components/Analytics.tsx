@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Transaction, User } from '../../types';
+import { Transaction, User } from '../types';
 import {
     BarChart,
     Bar,

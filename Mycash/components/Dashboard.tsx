@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { User, Transaction } from '../../types';
+import { User, Transaction } from '../types';
 import Navbar from './Navbar';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
