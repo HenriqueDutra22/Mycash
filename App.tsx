@@ -319,6 +319,7 @@ const App: React.FC = () => {
         }
       } catch (err) {
         console.error('Error saving transaction:', err);
+        alert(`Erro ao salvar no banco de dados: ${JSON.stringify(err)}. Salvando apenas localmente.`);
         const tx = { ...newTx, id: Math.random().toString(36).substr(2, 9) } as Transaction;
         setTransactions([tx, ...transactions]);
       }
