@@ -11,7 +11,7 @@ interface NewTransactionViewProps {
 }
 
 const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave, onImport, cards }) => {
-  const [amount, setAmount] = useState('0.00');
+  const [amount, setAmount] = useState('0,00');
   const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('shopping');
@@ -22,7 +22,9 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
   const [isRecurring, setIsRecurring] = useState(false);
 
   const handleSave = () => {
-    const numericAmount = parseFloat(amount) * (type === TransactionType.EXPENSE ? -1 : 1);
+    // Parse "1.000,00" -> remove dots, replace comma with dot -> 1000.00
+    const cleanAmountStr = amount.replace(/\./g, '').replace(',', '.');
+    const numericAmount = parseFloat(cleanAmountStr) * (type === TransactionType.EXPENSE ? -1 : 1);
     const selectedCat = CATEGORIES.find(c => c.id === category) || CATEGORIES[0];
 
     onSave({
@@ -63,12 +65,23 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
             <span className="text-3xl font-black text-primary/40">R$</span>
             <input
               autoFocus
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="bg-transparent border-none text-6xl font-black text-center focus:ring-0 p-0 w-full max-w-[280px] placeholder:text-gray-900"
-              placeholder="0.00"
-              step="0.01"
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                const numericValue = parseInt(value || '0', 10) / 100;
+
+                // Format directly to display BRL style: 1.000,00
+                const formatted = numericValue.toLocaleString('pt-BR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+
+                setAmount(formatted);
+              }}
+              className="bg-transparent border-none text-6xl font-black text-center focus:ring-0 p-0 w-full max-w-[400px] placeholder:text-gray-900"
+              placeholder="0,00"
             />
           </div>
         </div>
