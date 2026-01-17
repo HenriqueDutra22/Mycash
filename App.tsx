@@ -278,7 +278,7 @@ const App: React.FC = () => {
   };
 
   const totalBalance = useMemo(() => {
-    return transactions.reduce((acc, curr) => acc + curr.amount, 10000);
+    return transactions.reduce((acc, curr) => acc + curr.amount, 0);
   }, [transactions]);
 
   const addTransaction = async (newTx: Omit<Transaction, 'id'>) => {
