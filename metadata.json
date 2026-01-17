@@ -1,0 +1,6 @@
+
+{
+  "name": "MyCash Premium",
+  "description": "Gestão financeira de luxo com scanner de recibos via IA e modo de privacidade avançado.",
+  "requestFramePermissions": ["camera"]
+}
