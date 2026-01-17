@@ -140,9 +140,10 @@ const App: React.FC = () => {
           isRecurring: tx.is_recurring,
           recurringDay: tx.recurring_day
         }));
-        setTransactions(formatted.length > 0 ? formatted : INITIAL_TRANSACTIONS);
+        // Fix: Do not load INITIAL_TRANSACTIONS if user has no data. Let it be empty.
+        setTransactions(formatted);
       } else {
-        setTransactions(INITIAL_TRANSACTIONS);
+        setTransactions([]);
       }
     } catch (err) {
       console.error('Error fetching transactions:', err);
