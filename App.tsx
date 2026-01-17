@@ -257,9 +257,18 @@ const App: React.FC = () => {
   const addCard = async (newCard: Omit<Card, 'id'>) => {
     if (session?.user) {
       try {
+        const dbCard = {
+          name: newCard.name,
+          lastDigits: newCard.lastDigits,
+          brand: newCard.brand,
+          color: newCard.color,
+          type: newCard.type,
+          user_id: session.user.id
+        };
+
         const { data, error } = await supabase
           .from('cards')
-          .insert([{ ...newCard, user_id: session.user.id }])
+          .insert([dbCard])
           .select()
           .single();
 
@@ -341,16 +350,23 @@ const App: React.FC = () => {
   const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
     if (session?.user) {
       try {
-        const dbUpdates: any = { ...updates };
-        if (updates.paymentMethod) dbUpdates.payment_method = updates.paymentMethod;
-        if (updates.cardId) dbUpdates.card_id = updates.cardId;
+        const dbUpdates: any = {};
+        if (updates.description !== undefined) dbUpdates.description = updates.description;
+        if (updates.amount !== undefined) dbUpdates.amount = updates.amount;
+        if (updates.category !== undefined) dbUpdates.category = updates.category;
+        if (updates.date !== undefined) dbUpdates.date = updates.date;
+        if (updates.time !== undefined) dbUpdates.time = updates.time;
+        if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+        if (updates.type !== undefined) dbUpdates.type = updates.type;
+        if (updates.paymentMethod !== undefined) dbUpdates.payment_method = updates.paymentMethod;
+        if (updates.cardId !== undefined) dbUpdates.card_id = updates.cardId;
+        if (updates.isRecurring !== undefined) dbUpdates.is_recurring = updates.isRecurring;
+        if (updates.recurringDay !== undefined) dbUpdates.recurring_day = updates.recurringDay;
+
         if (updates.installments) {
           dbUpdates.installments_current = updates.installments.current;
           dbUpdates.installments_total = updates.installments.total;
         }
-        delete dbUpdates.paymentMethod;
-        delete dbUpdates.cardId;
-        delete dbUpdates.installments;
 
         const { error } = await supabase
           .from('transactions')
@@ -377,14 +393,20 @@ const App: React.FC = () => {
     if (session?.user) {
       try {
         const dbTxs = newTxs.map(tx => ({
-          ...tx,
+          description: tx.description,
+          amount: tx.amount,
+          type: tx.type,
+          category: tx.category,
+          date: tx.date,
+          time: tx.time,
+          icon: tx.icon,
           user_id: session.user.id,
           payment_method: tx.paymentMethod,
-          card_id: tx.cardId,
-          installments_current: tx.installments?.current,
-          installments_total: tx.installments?.total,
-          is_recurring: tx.isRecurring,
-          recurring_day: tx.recurringDay
+          card_id: tx.cardId || null,
+          installments_current: tx.installments?.current || null,
+          installments_total: tx.installments?.total || null,
+          is_recurring: tx.isRecurring || false,
+          recurring_day: tx.recurringDay || null
         }));
 
         const { data, error } = await supabase
