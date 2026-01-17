@@ -419,6 +419,31 @@ const App: React.FC = () => {
     }
   };
 
+  const resetAccount = async () => {
+    if (session?.user) {
+      try {
+        setLoading(true);
+        // Delete all compatible data
+        await supabase.from('transactions').delete().eq('user_id', session.user.id);
+        await supabase.from('goals').delete().eq('user_id', session.user.id);
+        // Keep cards or delete them? "Zerar dados" usually means transaction history, but user said "Zerar dados" (Reset data).
+        // The prompt in Settings says "TODOS os seus lançamentos, cartões e metas". So I will delete everything.
+        await supabase.from('cards').delete().eq('user_id', session.user.id);
+
+        setTransactions([]);
+        setGoals([]);
+        setCards([]);
+        alert('Todos os dados foram excluídos com sucesso.');
+        setCurrentView('HOME');
+      } catch (err) {
+        console.error("Error resetting account:", err);
+        alert("Erro ao excluir dados.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const renderView = () => {
     if (loading && session) return (
       <div className="flex items-center justify-center h-screen bg-[#0a0f0c]">
@@ -447,6 +472,7 @@ const App: React.FC = () => {
           transactions={transactions}
           onBack={() => setCurrentView('HOME')}
           cards={cards}
+          onEditTransaction={setEditingTransaction}
         />;
       case 'PLANNING':
         return <PlanningView
@@ -485,6 +511,7 @@ const App: React.FC = () => {
           onDeleteCard={deleteCard}
           onSignOut={handleSignOut}
           transactions={transactions}
+          resetData={resetAccount}
         />;
       default:
         return <HomeView

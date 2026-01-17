@@ -6,9 +6,10 @@ interface TransactionsViewProps {
     transactions: Transaction[];
     onBack: () => void;
     cards: Card[];
+    onEditTransaction: (tx: Transaction) => void;
 }
 
-const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, onBack, cards }) => {
+const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, onBack, cards, onEditTransaction }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredTransactions = transactions.filter(tx =>
@@ -65,7 +66,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, onBac
                                 </h4>
                                 <div className="flex flex-col gap-3">
                                     {groupedTransactions[date].map((tx: Transaction) => (
-                                        <div key={tx.id} className="flex items-center justify-between glass bg-white/[0.02] p-4 rounded-2xl border-white/5">
+                                        <div
+                                            key={tx.id}
+                                            onClick={() => onEditTransaction(tx)}
+                                            className="flex items-center justify-between glass bg-white/[0.02] p-4 rounded-2xl border-white/5 cursor-pointer hover:bg-white/5 transition-colors active:scale-95"
+                                        >
                                             <div className="flex items-center gap-4">
                                                 <div className={`size-10 rounded-xl flex items-center justify-center glass ${tx.amount > 0 ? 'bg-primary/10 text-primary' : 'bg-white/5 text-gray-400'}`}>
                                                     <span className="material-symbols-outlined text-xl">{tx.icon}</span>

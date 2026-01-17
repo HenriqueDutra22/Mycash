@@ -11,9 +11,10 @@ interface SettingsViewProps {
   onDeleteCard: (id: string) => void;
   onSignOut: () => void;
   transactions?: Transaction[];
+  resetData: () => void;
 }
 
-const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateProfile, onBack, cards, onAddCard, onDeleteCard, onSignOut, transactions = [] }) => {
+const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateProfile, onBack, cards, onAddCard, onDeleteCard, onSignOut, transactions = [], resetData }) => {
   const [showAddCard, setShowAddCard] = useState(false);
   const [editingField, setEditingField] = useState<'name' | 'limit' | 'avatar' | 'color' | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -257,10 +258,22 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateProfile, onBa
         <div className="flex flex-col gap-4 mt-4">
           <button
             onClick={onSignOut}
-            className="w-full h-16 bg-white/[0.03] border border-white/5 text-red-500 font-black rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all"
+            className="w-full h-16 bg-white/[0.03] border border-white/5 text-gray-500 font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all"
           >
             <span className="material-symbols-outlined">logout</span>
             Sair da Conta
+          </button>
+
+          <button
+            onClick={() => {
+              if (window.confirm("ATENÇÃO: Isso apagará TODOS os seus lançamentos, cartões e metas. Essa ação NÃO pode ser desfeita. Tem certeza?")) {
+                resetData();
+              }
+            }}
+            className="w-full h-12 bg-red-500/5 border border-red-500/20 text-red-500 font-black text-xs uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all mt-4 hover:bg-red-500/10"
+          >
+            <span className="material-symbols-outlined">delete_forever</span>
+            Zerar/Excluir Todos os Dados
           </button>
 
           <p className="text-center text-[9px] font-black text-gray-700 uppercase tracking-[0.4em] py-4">
