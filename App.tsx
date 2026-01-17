@@ -285,15 +285,22 @@ const App: React.FC = () => {
   const addTransaction = async (newTx: Omit<Transaction, 'id'>) => {
     if (session?.user) {
       try {
+        // Sanitize payload for Supabase (only existing columns)
         const dbTx = {
-          ...newTx,
+          description: newTx.description,
+          amount: newTx.amount,
+          type: newTx.type,
+          category: newTx.category,
+          date: newTx.date,
+          time: newTx.time,
+          icon: newTx.icon,
           user_id: session.user.id,
           payment_method: newTx.paymentMethod,
-          card_id: newTx.cardId,
-          installments_current: newTx.installments?.current,
-          installments_total: newTx.installments?.total,
-          is_recurring: newTx.isRecurring,
-          recurring_day: newTx.recurringDay
+          card_id: newTx.cardId || null,
+          installments_current: newTx.installments?.current || null,
+          installments_total: newTx.installments?.total || null,
+          is_recurring: newTx.isRecurring || false,
+          recurring_day: newTx.recurringDay || null
         };
 
         const { data, error } = await supabase
@@ -319,7 +326,10 @@ const App: React.FC = () => {
         }
       } catch (err) {
         console.error('Error saving transaction:', err);
-        alert('Erro ao salvar transação. Tente novamente.');
+        alert(`Erro ao salvar no banco (DEBUG): ${JSON.stringify(err)}`);
+        // Fallback local para não perder o dado na tela
+        const tx = { ...newTx, id: Math.random().toString(36).substr(2, 9) } as Transaction;
+        setTransactions([tx, ...transactions]);
       }
     } else {
       const tx = { ...newTx, id: Math.random().toString(36).substr(2, 9) } as Transaction;
