@@ -63,16 +63,21 @@ export const scanReceipt = async (base64Image: string): Promise<ExtractedTransac
       
       OBJETIVO: Extrair TODAS as transações financeiras (Entradas e Saídas) da imagem.
       
-      CONTEXTO: A imagem pode ser um extrato bancário, fatura de cartão ou comprovante de Pix.
+      CONTEXTO: A imagem é um extrato bancário (ex: Santander) com colunas de "Data", "Descrição", "Crédito (R$)", "Débito (R$)" e "Saldo (R$)".
       
       REGRAS DE EXTRAÇÃO:
-      1. IGNORE o resumo (total, limite, etc). Foque na LISTA de lançamentos.
-      2. 'description': Nome do estabelecimento ou favorecido/pagador.
-      3. 'amount': Valor numérico absoluto. Se houver parcelas (Ex: 99,90 Parcela 2/12), retorne 99.90.
-      4. 'date': Formato YYYY-MM-DD.
-      5. 'category': Atribua uma categoria (Saúde, Educação, Mercado, Lazer, Salário, Pix, Outros).
+      1. IGNORE o resumo superior. Foque na TABELA de lançamentos.
+      2. 'description': Nome fiel ao extrato. Ex: "PIX RECEBIDO...", "DEBITO VISA...", "REMUNERACAO APLICACAO...".
+      3. 'amount': Valor numérico absoluto (sempre positivo no JSON). 
+         - Se houver valor na coluna "Débito", extraia esse valor.
+         - Se houver valor na coluna "Crédito", extraia esse valor.
+         - Remova símbolos monetários e converta vírgula para ponto.
+      4. 'date': Formato YYYY-MM-DD. Use o ano do período (ex: 2026).
+      5. 'category': Atribua uma categoria (Mercado, Lazer, Salário, Investimento, Pix, Outros).
       6. 'confidence': 'high' ou 'low'.
-      7. 'isIncome': BOOLEANO. true se for uma entrada (recebido, crédito, estorno, salário), false se for uma saída (pagamento, compra, Pix enviado).
+      7. 'isIncome': BOOLEANO. 
+         - 'true' se o valor estiver na coluna "Crédito" OU a descrição for "PIX RECEBIDO" ou "REMUNERACAO".
+         - 'false' se o valor estiver na coluna "Débito" OU a descrição for "PIX ENVIADO", "DEBITO VISA", "PAGAMENTO".
 
       Retorne APENAS o JSON.`
     ]);
