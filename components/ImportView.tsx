@@ -110,15 +110,26 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
     reader.readAsDataURL(selectedFile);
   };
 
+  const toggleTxType = (index: number) => {
+    const updated = [...scannedTxs];
+    updated[index].isIncome = !updated[index].isIncome;
+    setScannedTxs(updated);
+  };
+
+  const setAllTypes = (isIncome: boolean) => {
+    const updated = scannedTxs.map(tx => ({ ...tx, isIncome }));
+    setScannedTxs(updated);
+  };
+
   const handleConfirm = () => {
     const finalTxs = scannedTxs.map(st => ({
       description: st.description,
-      amount: -Math.abs(st.amount),
+      amount: st.isIncome ? Math.abs(st.amount) : -Math.abs(st.amount),
       date: st.date || new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       category: st.category || 'Outros',
-      type: TransactionType.EXPENSE,
-      icon: 'receipt_long'
+      type: st.isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
+      icon: st.isIncome ? 'payments' : 'receipt_long'
     }));
     onSaveTransactions(finalTxs);
   };
@@ -215,26 +226,52 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
 
         {hasScanned && scannedTxs.length > 0 && !isProcessing && (
           <div className="flex flex-col gap-6 animate-fadeIn">
-            <div className="flex items-baseline justify-between pl-1">
-              <h2 className="text-2xl font-bold">{scannedTxs.length} Transações</h2>
-              <p className="text-primary text-sm font-bold">Identificadas</p>
+            <div className="flex items-center justify-between pl-1">
+              <div className="flex flex-col">
+                <h2 className="text-2xl font-bold">{scannedTxs.length} Transações</h2>
+                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mt-1">Revise os tipos (In/Out) abaixo</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAllTypes(false)}
+                  className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 transition-all"
+                >
+                  Tudo Saída
+                </button>
+                <button
+                  onClick={() => setAllTypes(true)}
+                  className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-all"
+                >
+                  Tudo Entrada
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3">
               {scannedTxs.map((tx, idx) => (
-                <div key={idx} className="glass bg-white/5 p-4 rounded-2xl flex items-center justify-between group">
+                <div key={idx} className="glass bg-white/5 p-4 rounded-2xl flex items-center justify-between group relative overflow-hidden">
+                  {tx.isIncome && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/40"></div>}
                   <div className="flex items-center gap-4">
-                    <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400">
-                      <span className="material-symbols-outlined text-xl">receipt_long</span>
-                    </div>
+                    <button
+                      onClick={() => toggleTxType(idx)}
+                      className={`size-10 rounded-xl flex items-center justify-center transition-all ${tx.isIncome ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(25,230,94,0.1)]' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}
+                    >
+                      <span className="material-symbols-outlined text-xl">
+                        {tx.isIncome ? 'add_circle' : 'remove_circle'}
+                      </span>
+                    </button>
                     <div>
-                      <p className="text-sm font-bold text-white group-hover:text-primary transition-colors">{tx.description}</p>
+                      <p className="text-sm font-bold text-white group-hover:text-primary transition-colors truncate max-w-[150px]">{tx.description}</p>
                       <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{tx.date}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-white">R$ {Math.abs(tx.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    <span className="text-[9px] px-2 py-0.5 rounded bg-white/5 text-gray-500 font-bold uppercase">Importado</span>
+                    <p className={`text-sm font-black ${tx.isIncome ? 'text-primary' : 'text-white'}`}>
+                      {tx.isIncome ? '+' : '-'} R$ {Math.abs(tx.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    <span className="text-[9px] px-2 py-0.5 rounded bg-white/5 text-gray-400 font-black uppercase tracking-tighter">
+                      {tx.isIncome ? 'Entrada' : 'Saída'}
+                    </span>
                   </div>
                 </div>
               ))}

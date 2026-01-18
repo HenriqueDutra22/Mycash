@@ -25,6 +25,7 @@ export interface ExtractedTransaction {
   date: string;
   category: string;
   confidence: 'high' | 'low';
+  isIncome?: boolean;
 }
 
 export const scanReceipt = async (base64Image: string): Promise<ExtractedTransaction[]> => {
@@ -42,9 +43,10 @@ export const scanReceipt = async (base64Image: string): Promise<ExtractedTransac
               amount: { type: SchemaType.NUMBER },
               date: { type: SchemaType.STRING },
               category: { type: SchemaType.STRING },
-              confidence: { type: SchemaType.STRING }
+              confidence: { type: SchemaType.STRING },
+              isIncome: { type: SchemaType.BOOLEAN }
             },
-            required: ['description', 'amount', 'date', 'category', 'confidence']
+            required: ['description', 'amount', 'date', 'category', 'confidence', 'isIncome']
           }
         }
       }
@@ -59,18 +61,18 @@ export const scanReceipt = async (base64Image: string): Promise<ExtractedTransac
       },
       `Você é um assistente financeiro de elite especializado em extratos bancários brasileiros.
       
-      OBJETIVO: Extrair TODAS as transações de gastos/compras da imagem.
+      OBJETIVO: Extrair TODAS as transações financeiras (Entradas e Saídas) da imagem.
       
-      CONTEXTO: A imagem pode ser uma fatura de cartão (ex: Santander SX).
+      CONTEXTO: A imagem pode ser um extrato bancário, fatura de cartão ou comprovante de Pix.
       
       REGRAS DE EXTRAÇÃO:
-      1. IGNORE o resumo da fatura (total da fatura, limite, etc). Foque na LISTA de lançamentos.
-      2. 'description': Nome do estabelecimento. Ex: "ACADEMIA AD3", "PANVEL FILIAL", "MP*5PRODUTOS".
-      3. 'amount': Extraia o valor numérico. Remova "R$" e pontos de milhar. Converta vírgula em ponto. 
-         IMPORTANTE: Se houver parcelas (ex: 99,90 Parcela 2 de 12), o valor da transação é 99.90.
-      4. 'date': Formato YYYY-MM-DD. Se a imagem disser "28/11/2025", retorne "2025-11-28".
-      5. 'category': Atribua uma categoria lógica (Saúde, Educação, Mercado, Lazer, Outros).
-      6. 'confidence': 'high' se extraiu corretamente, 'low' se houver dúvida.
+      1. IGNORE o resumo (total, limite, etc). Foque na LISTA de lançamentos.
+      2. 'description': Nome do estabelecimento ou favorecido/pagador.
+      3. 'amount': Valor numérico absoluto. Se houver parcelas (Ex: 99,90 Parcela 2/12), retorne 99.90.
+      4. 'date': Formato YYYY-MM-DD.
+      5. 'category': Atribua uma categoria (Saúde, Educação, Mercado, Lazer, Salário, Pix, Outros).
+      6. 'confidence': 'high' ou 'low'.
+      7. 'isIncome': BOOLEANO. true se for uma entrada (recebido, crédito, estorno, salário), false se for uma saída (pagamento, compra, Pix enviado).
 
       Retorne APENAS o JSON.`
     ]);

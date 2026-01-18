@@ -44,7 +44,8 @@ export const parseCSVStatement = (file: File): Promise<ExtractedTransaction[]> =
                             amount: isNaN(amount) ? 0 : amount,
                             date: formattedDate,
                             category: 'Geral',
-                            confidence: 'high' as 'high' | 'low'
+                            confidence: 'high' as 'high' | 'low',
+                            isIncome: amount > 0
                         };
                     }).filter(tx => tx.amount !== 0);
 
@@ -112,7 +113,8 @@ export const parsePDFStatement = async (file: File): Promise<ExtractedTransactio
                     amount: amount,
                     date: formattedDate,
                     category: 'Geral',
-                    confidence: 'high'
+                    confidence: 'high',
+                    isIncome: amount > 0
                 });
             }
             if (transactions.length > 0) break;
