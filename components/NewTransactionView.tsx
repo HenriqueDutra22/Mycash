@@ -22,9 +22,14 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
   const [isRecurring, setIsRecurring] = useState(false);
 
   const handleSave = () => {
-    // Parse "1.000,00" -> remove dots, replace comma with dot -> 1000.00
     const cleanAmountStr = amount.replace(/\./g, '').replace(',', '.');
     const numericAmount = parseFloat(cleanAmountStr) * (type === TransactionType.EXPENSE ? -1 : 1);
+
+    if (isNaN(numericAmount) || numericAmount === 0) {
+      alert('Por favor, insira um valor válido.');
+      return;
+    }
+
     const selectedCat = CATEGORIES.find(c => c.id === category) || CATEGORIES[0];
 
     onSave({
