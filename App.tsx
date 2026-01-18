@@ -11,6 +11,7 @@ import TransactionsView from './components/TransactionsView';
 import PlanningView from './components/PlanningView';
 import GoalsView from './components/GoalsView';
 import BottomNav from './components/BottomNav';
+import WalletView from './components/WalletView';
 
 import Layout from './components/Layout';
 import AuthView from './components/AuthView';
@@ -547,6 +548,13 @@ const App: React.FC = () => {
           onBack={() => setCurrentView('NEW_TRANSACTION')}
           onSaveTransactions={bulkAddTransactions}
         />;
+      case 'WALLET':
+        return <WalletView
+          cards={cards}
+          onAddCard={addCard}
+          onDeleteCard={deleteCard}
+          onBack={() => setCurrentView('HOME')}
+        />;
       case 'PROFILE':
         return <SettingsView
           user={user}
@@ -564,9 +572,14 @@ const App: React.FC = () => {
           user={user}
           transactions={transactions}
           totalBalance={totalBalance}
+          accountBalance={accountBalance}
+          creditBalance={creditBalance}
           isGhostMode={isGhostMode}
           setIsGhostMode={setIsGhostMode}
           onNewTransaction={() => setCurrentView('NEW_TRANSACTION')}
+          onShowAnalytics={() => setCurrentView('ANALYTICS')}
+          onShowHistory={() => setCurrentView('TRANSACTIONS')}
+          onEditTransaction={setEditingTransaction}
           cards={cards}
         />;
     }
