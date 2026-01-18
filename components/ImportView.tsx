@@ -233,7 +233,7 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-white">R$ {Math.abs(tx.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-sm font-black text-white">R$ {Math.abs(tx.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     <span className="text-[9px] px-2 py-0.5 rounded bg-white/5 text-gray-500 font-bold uppercase">Importado</span>
                   </div>
                 </div>

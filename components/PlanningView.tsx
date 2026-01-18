@@ -89,11 +89,11 @@ const PlanningView: React.FC<PlanningViewProps> = ({ transactions, onAddRecurrin
                 <div className="grid grid-cols-2 gap-4">
                     <div className="glass bg-primary/5 border border-primary/20 p-5 rounded-3xl">
                         <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Receita Fixa</p>
-                        <p className="text-xl font-black text-white">R$ {fixedIncome.toLocaleString('pt-BR')}</p>
+                        <p className="text-xl font-black text-white">R$ {(fixedIncome ?? 0).toLocaleString('pt-BR')}</p>
                     </div>
                     <div className="glass bg-red-400/5 border border-red-400/20 p-5 rounded-3xl">
                         <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Custo Fixo</p>
-                        <p className="text-xl font-black text-white">R$ {fixedExpenses.toLocaleString('pt-BR')}</p>
+                        <p className="text-xl font-black text-white">R$ {(fixedExpenses ?? 0).toLocaleString('pt-BR')}</p>
                     </div>
                 </div>
 
@@ -131,7 +131,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ transactions, onAddRecurrin
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <p className={`text-sm font-black ${item.type === TransactionType.INCOME ? 'text-primary' : (fulfilled ? 'text-gray-600' : 'text-white')}`}>
-                                                R$ {Math.abs(item.amount).toLocaleString('pt-BR')}
+                                                R$ {Math.abs(item.amount ?? 0).toLocaleString('pt-BR')}
                                             </p>
 
                                             {!fulfilled ? (
@@ -165,7 +165,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ transactions, onAddRecurrin
                 <div className="glass bg-white/5 p-6 rounded-[32px] border border-white/5 mt-4 relative overflow-hidden">
                     <div className="absolute -right-10 -bottom-10 size-40 bg-primary/10 rounded-full blur-3xl"></div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Sobra Planejada (Mensal)</p>
-                    <h4 className="text-3xl font-black text-primary">R$ {(fixedIncome - fixedExpenses).toLocaleString('pt-BR')}</h4>
+                    <h4 className="text-3xl font-black text-primary">R$ {((fixedIncome ?? 0) - (fixedExpenses ?? 0)).toLocaleString('pt-BR')}</h4>
                     <p className="text-[9px] text-gray-600 mt-2 leading-relaxed">
                         Este é o valor que teoricamente "sobra" do seu salário após pagar todos os custos fixos mensais cadastrados.
                     </p>

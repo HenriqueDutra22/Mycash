@@ -186,11 +186,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateProfile, onBa
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Meta de Gasto Mensal</p>
                     <span className="material-symbols-outlined text-white/20 group-hover:text-primary text-xs">edit</span>
                   </div>
-                  <h5 className="text-2xl font-black group-hover:text-primary transition-colors">R$ {user.monthlyLimit.toLocaleString('pt-BR')}</h5>
+                  <h5 className="text-2xl font-black group-hover:text-primary transition-colors">R$ {(user.monthlyLimit ?? 0).toLocaleString('pt-BR')}</h5>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest">Saldo do Limite</p>
-                  <p className="text-sm font-bold text-gray-400">R$ {(user.monthlyLimit * 0.4).toLocaleString('pt-BR')} livre</p>
+                  <p className="text-sm font-bold text-gray-400">R$ {((user.monthlyLimit ?? 0) * 0.4).toLocaleString('pt-BR')} livre</p>
                 </div>
               </div>
 

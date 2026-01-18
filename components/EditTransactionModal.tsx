@@ -43,8 +43,8 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
                 <div className="flex flex-col gap-8">
                     <div className="bg-white/5 rounded-3xl p-6 border border-white/5 flex flex-col items-center">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Valor do Lançamento</p>
-                        <h4 className={`text-3xl font-black ${transaction.amount > 0 ? 'text-primary' : 'text-white'}`}>
-                            R$ {Math.abs(transaction.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <h4 className={`text-3xl font-black \${transaction.amount > 0 ? 'text-primary' : 'text-white'}`}>
+                            R$ {Math.abs(transaction.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </h4>
                     </div>
 

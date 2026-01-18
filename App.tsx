@@ -289,19 +289,19 @@ const App: React.FC = () => {
   };
 
   const totalBalance = useMemo(() => {
-    return transactions.reduce((acc, curr) => acc + curr.amount, 0);
+    return (transactions || []).reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0);
   }, [transactions]);
 
   const accountBalance = useMemo(() => {
-    return transactions
-      .filter(tx => tx.paymentMethod !== PaymentMethod.CREDIT)
-      .reduce((acc, curr) => acc + curr.amount, 0);
+    return (transactions || [])
+      .filter(tx => tx?.paymentMethod !== PaymentMethod.CREDIT)
+      .reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0) || 0;
   }, [transactions]);
 
   const creditBalance = useMemo(() => {
-    return transactions
-      .filter(tx => tx.paymentMethod === PaymentMethod.CREDIT)
-      .reduce((acc, curr) => acc + curr.amount, 0);
+    return (transactions || [])
+      .filter(tx => tx?.paymentMethod === PaymentMethod.CREDIT)
+      .reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0) || 0;
   }, [transactions]);
 
   const addTransaction = async (newTx: Omit<Transaction, 'id'>) => {

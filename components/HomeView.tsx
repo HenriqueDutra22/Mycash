@@ -75,7 +75,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, transactions, totalBalance, a
                 ) : (
                   <>
                     <span className="text-primary/60 text-2xl mr-2">R$</span>
-                    {accountBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    {(accountBalance ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </>
                 )}
               </h1>
@@ -89,7 +89,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, transactions, totalBalance, a
                 ) : (
                   <>
                     <span className="text-gray-500 text-sm mr-2 font-black">R$</span>
-                    {Math.abs(creditBalance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    {Math.abs(creditBalance ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </>
                 )}
               </p>
@@ -176,7 +176,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, transactions, totalBalance, a
                     </div>
                     <div className="text-right">
                       <p className={`text-sm font-black ${tx.amount > 0 ? 'text-primary' : 'text-white'}`}>
-                        {tx.amount > 0 ? '+' : ''} R$ {Math.abs(tx.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {tx.amount > 0 ? '+' : ''} R$ {Math.abs(tx.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                       <p className="text-[10px] text-gray-600 font-bold">{tx.time}</p>
                     </div>

@@ -132,7 +132,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
     if (cashFlow > 0) {
       list.push({
         title: "Potencial de Investimento",
-        desc: "Você tem R$ " + cashFlow.toLocaleString('pt-BR') + " sobrando. Que tal investir 10% disso?",
+        desc: "Você tem R$ " + (cashFlow ?? 0).toLocaleString('pt-BR') + " sobrando. Que tal investir 10% disso?",
         icon: "trending_up",
         color: "text-primary",
         bg: "bg-primary/10"
@@ -164,7 +164,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
           <div className="flex justify-between items-end mb-6">
             <div>
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-2">Seu Cashflow</p>
-              <h2 className="text-3xl font-black text-white">R$ {cashFlow.toLocaleString('pt-BR')}</h2>
+              <h2 className="text-3xl font-black text-white">R$ {(cashFlow ?? 0).toLocaleString('pt-BR')}</h2>
             </div>
             <div className={`px-3 py-1.5 rounded-xl border border-white/5 ${cashFlow >= 0 ? 'bg-primary/10 text-primary' : 'bg-red-500/10 text-red-500'}`}>
               <span className="text-[10px] font-black uppercase tracking-widest">{cashFlow >= 0 ? '+ Positivo' : '- Negativo'}</span>
@@ -231,7 +231,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1.5">
                     <p className="text-sm font-bold text-white/80">{cat.label}</p>
-                    <p className="text-sm font-black text-white">R$ {cat.val.toLocaleString('pt-BR')}</p>
+                    <p className="text-sm font-black text-white">R$ {(cat.val ?? 0).toLocaleString('pt-BR')}</p>
                   </div>
                   <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
                     <div className="bg-primary h-full rounded-full" style={{ width: `${(cat.val / maxCategoryVal) * 100}%` }}></div>
@@ -257,8 +257,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-xs font-black text-white">R$ {item.amount.toLocaleString('pt-BR')}</span>
-                  <div className="size-1.5 rounded-full bg-primary" style={{ opacity: Math.max(0.1, item.amount / (expenses + incomes)) }}></div>
+                  <span className="text-xs font-black text-white">R$ {(item.amount ?? 0).toLocaleString('pt-BR')}</span>
+                  <div className="size-1.5 rounded-full bg-primary" style={{ opacity: Math.max(0.1, (item.amount ?? 0) / ((expenses ?? 0) + (incomes ?? 0))) }}></div>
                 </div>
               </div>
             ))}

@@ -78,8 +78,8 @@ const GoalsView: React.FC<GoalsViewProps> = ({ goals, onAddGoal, onUpdateGoal, o
                     <div className="relative z-10">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Progresso Geral</p>
                         <div className="flex items-end gap-2 mb-6">
-                            <h3 className="text-4xl font-black text-white">R$ {totalSaved.toLocaleString('pt-BR')}</h3>
-                            <p className="text-sm font-bold text-gray-500 mb-1.5">de R$ {totalTarget.toLocaleString('pt-BR')}</p>
+                            <h3 className="text-4xl font-black text-white">R$ {(totalSaved ?? 0).toLocaleString('pt-BR')}</h3>
+                            <p className="text-sm font-bold text-gray-500 mb-1.5">de R$ {(totalTarget ?? 0).toLocaleString('pt-BR')}</p>
                         </div>
 
                         <div className="w-full h-4 bg-white/5 rounded-full overflow-hidden mb-2">
@@ -90,7 +90,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ goals, onAddGoal, onUpdateGoal, o
                         </div>
                         <div className="flex justify-between items-center">
                             <p className="text-[10px] font-black text-primary uppercase">{overallProgress.toFixed(1)}% Completo</p>
-                            <p className="text-[10px] font-black text-gray-600 uppercase">Faltam R$ {(totalTarget - totalSaved).toLocaleString('pt-BR')}</p>
+                            <p className="text-[10px] font-black text-gray-600 uppercase">Faltam R$ {((totalTarget ?? 0) - (totalSaved ?? 0)).toLocaleString('pt-BR')}</p>
                         </div>
                     </div>
                 </div>
@@ -121,8 +121,8 @@ const GoalsView: React.FC<GoalsViewProps> = ({ goals, onAddGoal, onUpdateGoal, o
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-lg font-black text-white">R$ {goal.currentAmount.toLocaleString('pt-BR')}</p>
-                                            <p className="text-[10px] text-gray-500 font-bold uppercase">Meta: R$ {goal.targetAmount.toLocaleString('pt-BR')}</p>
+                                            <p className="text-lg font-black text-white">R$ {(goal.currentAmount ?? 0).toLocaleString('pt-BR')}</p>
+                                            <p className="text-[10px] text-gray-500 font-bold uppercase">Meta: R$ {(goal.targetAmount ?? 0).toLocaleString('pt-BR')}</p>
                                         </div>
                                     </div>
 
