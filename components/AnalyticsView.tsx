@@ -39,15 +39,46 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
   }, [transactions]);
 
   const methodTotals = useMemo(() => {
-    const totals: Record<string, number> = {};
-    transactions
-      .filter(t => t.type === TransactionType.EXPENSE)
-      .forEach(t => {
-        const method = t.paymentMethod || 'Outros';
-        totals[method] = (totals[method] || 0) + Math.abs(t.amount || 0);
-      });
-    return totals;
-  }, [transactions]);
+    const totals: Record<string, { label: string, amount: number, icon: string, color: string }> = {};
+
+    transactions.forEach(t => {
+      let key = '';
+      let label = '';
+      let icon = '';
+
+      if (t.paymentMethod === PaymentMethod.PIX) {
+        if (t.type === TransactionType.INCOME) {
+          key = 'PIX_RECEIVED';
+          label = 'Pix Recebido';
+          icon = 'account_balance';
+        } else {
+          key = 'PIX_SENT';
+          label = 'Pix Enviado';
+          icon = 'payments';
+        }
+      } else if (t.paymentMethod === PaymentMethod.CREDIT) {
+        key = 'CREDIT';
+        label = t.cardId ? (cards.find(c => c.id === t.cardId)?.name || 'Cartão de Crédito') : 'Cartão de Crédito';
+        icon = 'credit_card';
+      } else if (t.paymentMethod === PaymentMethod.DEBIT) {
+        key = 'DEBIT';
+        label = 'Débito / Conta';
+        icon = 'account_balance_wallet';
+      } else {
+        key = 'CASH';
+        label = 'Dinheiro / Outros';
+        icon = 'money';
+      }
+
+      const amount = Math.abs(t.amount || 0);
+      if (!totals[key]) {
+        totals[key] = { label, amount: 0, icon, color: t.type === TransactionType.INCOME ? 'text-primary' : 'text-gray-500' };
+      }
+      totals[key].amount += amount;
+    });
+
+    return Object.values(totals).sort((a, b) => b.amount - a.amount);
+  }, [transactions, cards]);
 
   const chartData = useMemo(() => {
     // Group by date
@@ -215,21 +246,19 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
         <section className="glass bg-white/[0.02] border border-white/5 rounded-[32px] p-8">
           <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] mb-8">DNA de Pagamento</h3>
           <div className="flex flex-col gap-6">
-            {Object.entries(methodTotals).map(([method, val]) => (
-              <div key={method} className="flex items-center justify-between group">
+            {methodTotals.map((item) => (
+              <div key={item.label} className="flex items-center justify-between group">
                 <div className="flex items-center gap-4">
                   <div className="size-9 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                    <span className="material-symbols-outlined text-gray-500 text-lg">
-                      {method === PaymentMethod.CREDIT ? 'credit_card' :
-                        method === PaymentMethod.DEBIT ? 'account_balance_wallet' :
-                          method === PaymentMethod.PIX ? 'payments' : 'money'}
+                    <span className={`material-symbols-outlined text-lg ${item.color}`}>
+                      {item.icon}
                     </span>
                   </div>
-                  <span className="text-[10px] font-black text-gray-400 capitalize tracking-widest">{method.toLowerCase()}</span>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-xs font-black text-white">R$ {val.toLocaleString('pt-BR')}</span>
-                  <div className="size-1.5 rounded-full bg-primary" style={{ opacity: Math.max(0.1, val / expenses) }}></div>
+                  <span className="text-xs font-black text-white">R$ {item.amount.toLocaleString('pt-BR')}</span>
+                  <div className="size-1.5 rounded-full bg-primary" style={{ opacity: Math.max(0.1, item.amount / (expenses + incomes)) }}></div>
                 </div>
               </div>
             ))}
