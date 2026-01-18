@@ -80,10 +80,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, onBac
                                                     <div className="flex items-center gap-2 opacity-60">
                                                         <span className="text-[9px] font-black uppercase tracking-widest">{tx.category}</span>
                                                         {tx.paymentMethod && (
-                                                            <span className="material-symbols-outlined text-[10px]">
-                                                                {tx.paymentMethod === PaymentMethod.CREDIT ? 'credit_card' :
-                                                                    tx.paymentMethod === PaymentMethod.DEBIT ? 'account_balance_wallet' :
-                                                                        tx.paymentMethod === PaymentMethod.PIX ? 'payments' : 'money'}
+                                                            <span className="text-[9px] font-black uppercase tracking-widest text-primary">
+                                                                {tx.paymentMethod === PaymentMethod.PIX ? (tx.amount > 0 ? 'Pix Recebido' : 'Pix Enviado') :
+                                                                    tx.paymentMethod === PaymentMethod.DEBIT ? 'Débito' :
+                                                                        tx.paymentMethod === PaymentMethod.CREDIT ? (tx.cardId ? cards.find(c => c.id === tx.cardId)?.name : 'Crédito') :
+                                                                            tx.paymentMethod}
                                                             </span>
                                                         )}
                                                     </div>

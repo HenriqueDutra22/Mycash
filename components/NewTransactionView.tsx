@@ -93,19 +93,28 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
 
         <div className="flex flex-col gap-8">
           {/* Tipo de Transação */}
-          <div className="flex h-14 w-full p-1.5 bg-white/[0.03] rounded-2xl border border-white/5">
-            <button
-              onClick={() => setType(TransactionType.EXPENSE)}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${type === TransactionType.EXPENSE ? 'bg-white text-black shadow-xl' : 'text-gray-600'}`}
-            >
-              <span className="material-symbols-outlined text-lg">trending_down</span> Saída
-            </button>
-            <button
-              onClick={() => setType(TransactionType.INCOME)}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${type === TransactionType.INCOME ? 'bg-primary text-black shadow-xl shadow-primary/20' : 'text-gray-600'}`}
-            >
-              <span className="material-symbols-outlined text-lg">trending_up</span> Entrada
-            </button>
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] pl-1">Modalidade</label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { id: 'PIX_SENT', label: 'Pix Enviado', icon: 'payments', type: TransactionType.EXPENSE, method: PaymentMethod.PIX },
+                { id: 'PIX_RECEIVED', label: 'Pix Recebido', icon: 'account_balance', type: TransactionType.INCOME, method: PaymentMethod.PIX },
+                { id: 'DEBIT', label: 'Débito', icon: 'account_balance_wallet', type: TransactionType.EXPENSE, method: PaymentMethod.DEBIT },
+                { id: 'CREDIT', label: 'Crédito', icon: 'credit_card', type: TransactionType.EXPENSE, method: PaymentMethod.CREDIT }
+              ].map(mode => (
+                <button
+                  key={mode.id}
+                  onClick={() => {
+                    setType(mode.type);
+                    setPaymentMethod(mode.method);
+                  }}
+                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${type === mode.type && paymentMethod === mode.method ? 'bg-white text-black border-white shadow-lg' : 'bg-white/[0.03] border-white/5 text-gray-500'}`}
+                >
+                  <span className="material-symbols-outlined text-xl">{mode.icon}</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider">{mode.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Campos de Dados */}
@@ -140,26 +149,6 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] pl-1">Pagamento</label>
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { id: PaymentMethod.PIX, label: 'Pix', icon: 'payments' },
-                  { id: PaymentMethod.CREDIT, label: 'Crédito', icon: 'credit_card' },
-                  { id: PaymentMethod.DEBIT, label: 'Débito', icon: 'account_balance_wallet' },
-                  { id: PaymentMethod.CASH, label: 'Dinheiro', icon: 'money' }
-                ].map(method => (
-                  <button
-                    key={method.id}
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`flex flex-col items-center justify-center gap-2 h-16 rounded-2xl border transition-all ${paymentMethod === method.id ? 'bg-white text-black border-white shadow-lg' : 'bg-white/[0.03] border-white/5 text-gray-500'}`}
-                  >
-                    <span className="material-symbols-outlined text-xl">{method.icon}</span>
-                    <span className="text-[8px] font-black uppercase">{method.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {(paymentMethod === PaymentMethod.CREDIT || paymentMethod === PaymentMethod.DEBIT) && (
               <div className="flex flex-col gap-2 animate-slide-up">

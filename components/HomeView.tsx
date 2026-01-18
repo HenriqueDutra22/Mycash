@@ -6,6 +6,8 @@ interface HomeViewProps {
   user: UserProfile;
   transactions: Transaction[];
   totalBalance: number;
+  accountBalance: number;
+  creditBalance: number;
   isGhostMode: boolean;
   setIsGhostMode: (v: boolean) => void;
   onNewTransaction: () => void;
@@ -15,7 +17,7 @@ interface HomeViewProps {
   cards: Card[];
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ user, transactions, totalBalance, isGhostMode, setIsGhostMode, onNewTransaction, onShowAnalytics, onShowHistory, onEditTransaction, cards }) => {
+const HomeView: React.FC<HomeViewProps> = ({ user, transactions, totalBalance, accountBalance, creditBalance, isGhostMode, setIsGhostMode, onNewTransaction, onShowAnalytics, onShowHistory, onEditTransaction, cards }) => {
   const groupedTransactions = transactions.reduce((acc: any, tx) => {
     const date = tx.date;
     if (!acc[date]) acc[date] = [];
@@ -64,18 +66,34 @@ const HomeView: React.FC<HomeViewProps> = ({ user, transactions, totalBalance, i
         <div className="relative glass bg-gradient-to-br from-glass-dark to-black/40 p-8 rounded-[32px] overflow-hidden emerald-glow border border-white/5">
           <div className="absolute -right-20 -top-20 size-60 bg-primary/10 blur-[80px] rounded-full"></div>
 
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Saldo Patrimonial</span>
-            <h1 className="text-4xl font-black tracking-tight mt-1 flex items-baseline">
-              {isGhostMode ? (
-                <span className="tracking-[0.1em] text-gray-700">••••••••</span>
-              ) : (
-                <>
-                  <span className="text-primary/60 text-2xl mr-2">R$</span>
-                  {totalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </>
-              )}
-            </h1>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Saldo em Conta</span>
+              <h1 className="text-4xl font-black tracking-tight mt-1 flex items-baseline">
+                {isGhostMode ? (
+                  <span className="tracking-[0.1em] text-gray-700">••••••••</span>
+                ) : (
+                  <>
+                    <span className="text-primary/60 text-2xl mr-2">R$</span>
+                    {accountBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </>
+                )}
+              </h1>
+            </div>
+
+            <div className="flex flex-col gap-1 opacity-80">
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Fatura de Cartões</span>
+              <p className="text-xl font-black tracking-tight flex items-baseline text-white/90">
+                {isGhostMode ? (
+                  <span className="tracking-[0.1em] text-gray-800">••••</span>
+                ) : (
+                  <>
+                    <span className="text-gray-500 text-sm mr-2 font-black">R$</span>
+                    {Math.abs(creditBalance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </>
+                )}
+              </p>
+            </div>
           </div>
 
           <div className="mt-8 flex gap-3">
@@ -139,8 +157,11 @@ const HomeView: React.FC<HomeViewProps> = ({ user, transactions, totalBalance, i
                                     tx.paymentMethod === PaymentMethod.DEBIT ? 'account_balance_wallet' :
                                       tx.paymentMethod === PaymentMethod.PIX ? 'payments' : 'money'}
                                 </span>
-                                <span className="text-[8px] font-black uppercase">
-                                  {tx.cardId ? cards.find(c => c.id === tx.cardId)?.name : tx.paymentMethod}
+                                <span className="text-[8px] font-black uppercase text-primary">
+                                  {tx.paymentMethod === PaymentMethod.PIX ? (tx.amount > 0 ? 'Pix Recebido' : 'Pix Enviado') :
+                                    tx.paymentMethod === PaymentMethod.DEBIT ? 'Débito' :
+                                      tx.paymentMethod === PaymentMethod.CREDIT ? (tx.cardId ? cards.find(c => c.id === tx.cardId)?.name : 'Crédito') :
+                                        tx.paymentMethod}
                                 </span>
                               </div>
                             </>

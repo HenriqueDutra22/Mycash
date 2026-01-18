@@ -291,6 +291,18 @@ const App: React.FC = () => {
     return transactions.reduce((acc, curr) => acc + curr.amount, 0);
   }, [transactions]);
 
+  const accountBalance = useMemo(() => {
+    return transactions
+      .filter(tx => tx.paymentMethod !== PaymentMethod.CREDIT)
+      .reduce((acc, curr) => acc + curr.amount, 0);
+  }, [transactions]);
+
+  const creditBalance = useMemo(() => {
+    return transactions
+      .filter(tx => tx.paymentMethod === PaymentMethod.CREDIT)
+      .reduce((acc, curr) => acc + curr.amount, 0);
+  }, [transactions]);
+
   const addTransaction = async (newTx: Omit<Transaction, 'id'>) => {
     if (session?.user) {
       try {
@@ -489,6 +501,8 @@ const App: React.FC = () => {
           user={user}
           transactions={transactions}
           totalBalance={totalBalance}
+          accountBalance={accountBalance}
+          creditBalance={creditBalance}
           isGhostMode={isGhostMode}
           setIsGhostMode={setIsGhostMode}
           onNewTransaction={() => setCurrentView('NEW_TRANSACTION')}
