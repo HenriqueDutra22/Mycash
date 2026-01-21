@@ -13,6 +13,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.vers
  * - Usa vírgula como decimal (formato BR)
  * - Pode ter sinal negativo
  * - NUNCA converte erro de parsing em zero
+ * - Tenta importar TODA linha com data + valor
  */
 export const parseTabularBankStatement = (file: File): Promise<ExtractedTransaction[]> => {
     return new Promise(async (resolve, reject) => {
@@ -20,79 +21,106 @@ export const parseTabularBankStatement = (file: File): Promise<ExtractedTransact
             const text = await file.text();
             const lines = text.split('\n');
             const transactions: ExtractedTransaction[] = [];
+            const errors: string[] = [];
+
+            console.log(`📄 Processando ${lines.length} linhas do arquivo...`);
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
+                const lineNum = i + 1;
 
-                // Pular linhas vazias ou cabeçalhos
-                if (!line || line.length < 10) continue;
+                // Pular apenas linhas completamente vazias
+                if (!line) continue;
 
-                // Regex para extrair data no formato DD/MM/YYYY ou DD/MM/YY
-                const dateMatch = line.match(/(\d{2}\/\d{2}\/\d{2,4})/);
-                if (!dateMatch) continue; // Pular se não tiver data
+                try {
+                    // Regex para extrair data no formato DD/MM/YYYY ou DD/MM/YY
+                    const dateMatch = line.match(/(\d{2}\/\d{2}\/\d{2,4})/);
 
-                const dateStr = dateMatch[1];
+                    // Extrair valores monetários (formato brasileiro: -1.234,56 ou 1.234,56)
+                    const valueRegex = /-?\d{1,3}(?:\.\d{3})*,\d{2}/g;
+                    const values = line.match(valueRegex);
 
-                // Extrair valores monetários (formato brasileiro: -1.234,56 ou 1.234,56)
-                // Procura por números com vírgula decimal, opcionalmente com pontos de milhar e sinal negativo
-                const valueRegex = /-?\d{1,3}(?:\.\d{3})*,\d{2}/g;
-                const values = line.match(valueRegex);
+                    // Se não tem data OU não tem valor, pular mas logar
+                    if (!dateMatch || !values || values.length < 1) {
+                        if (line.length > 5) { // Só loga linhas com conteúdo relevante
+                            console.warn(`⚠️ Linha ${lineNum} ignorada (sem data ou valor): "${line.substring(0, 50)}..."`);
+                        }
+                        continue;
+                    }
 
-                if (!values || values.length < 1) {
-                    console.warn(`Linha ${i + 1}: Nenhum valor encontrado - "${line}"`);
-                    continue; // Pular linha sem valores
+                    const dateStr = dateMatch[1];
+
+                    // O VALOR da transação é o PENÚLTIMO número (antes do saldo)
+                    // Se houver apenas 1 número, é o valor
+                    const valueStr = values.length >= 2 ? values[values.length - 2] : values[0];
+
+                    // Normalizar número brasileiro para formato JS
+                    const normalizedValue = valueStr
+                        .replace(/\./g, '')  // Remove pontos de milhar
+                        .replace(',', '.');   // Troca vírgula por ponto
+
+                    const amount = parseFloat(normalizedValue);
+
+                    // Se parsing falhar, logar e continuar
+                    if (isNaN(amount)) {
+                        const error = `❌ Linha ${lineNum}: Erro ao parsear valor "${valueStr}" - "${line}"`;
+                        console.error(error);
+                        errors.push(error);
+                        continue; // Continua processando outras linhas
+                    }
+
+                    // Extrair descrição (texto entre data e primeiro valor)
+                    const afterDate = line.substring(line.indexOf(dateStr) + dateStr.length).trim();
+                    const firstValueIndex = afterDate.indexOf(valueStr);
+                    const description = firstValueIndex > 0
+                        ? afterDate.substring(0, firstValueIndex).trim()
+                        : 'Transação Importada';
+
+                    // Formatar data para YYYY-MM-DD
+                    const [d, m, y] = dateStr.split('/');
+                    const year = y.length === 2 ? `20${y}` : y;
+                    const formattedDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+
+                    // Identificar se é crédito (positivo) ou débito (negativo)
+                    const isIncome = amount > 0;
+
+                    transactions.push({
+                        description: description || 'Transação Importada',
+                        amount: Math.abs(amount),
+                        date: formattedDate,
+                        category: 'Geral',
+                        confidence: 'high' as 'high' | 'low',
+                        isIncome: isIncome
+                    });
+
+                    console.log(`✅ Linha ${lineNum}: ${description} - ${isIncome ? '+' : '-'}${Math.abs(amount)}`);
+
+                } catch (error: any) {
+                    // Logar erro mas continuar processando
+                    const errorMsg = `❌ Linha ${lineNum}: Erro inesperado - ${error.message} - "${line}"`;
+                    console.error(errorMsg);
+                    errors.push(errorMsg);
                 }
-
-                // O VALOR da transação é o PENÚLTIMO número (antes do saldo)
-                // Se houver apenas 1 número, é o valor
-                const valueStr = values.length >= 2 ? values[values.length - 2] : values[0];
-
-                // Normalizar número brasileiro para formato JS
-                const normalizedValue = valueStr
-                    .replace(/\./g, '')  // Remove pontos de milhar
-                    .replace(',', '.');   // Troca vírgula por ponto
-
-                const amount = parseFloat(normalizedValue);
-
-                // NUNCA converter erro de parsing em zero - lançar erro
-                if (isNaN(amount)) {
-                    throw new Error(`Linha ${i + 1}: Erro ao parsear valor "${valueStr}" - resultado NaN`);
-                }
-
-                // Extrair descrição (texto entre data e primeiro valor)
-                const afterDate = line.substring(line.indexOf(dateStr) + dateStr.length).trim();
-                const firstValueIndex = afterDate.indexOf(valueStr);
-                const description = firstValueIndex > 0
-                    ? afterDate.substring(0, firstValueIndex).trim()
-                    : 'Transação Importada';
-
-                // Formatar data para YYYY-MM-DD
-                const [d, m, y] = dateStr.split('/');
-                const year = y.length === 2 ? `20${y}` : y;
-                const formattedDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-
-                // Identificar se é crédito (positivo) ou débito (negativo)
-                const isIncome = amount > 0;
-
-                transactions.push({
-                    description: description || 'Transação Importada',
-                    amount: Math.abs(amount),
-                    date: formattedDate,
-                    category: 'Geral',
-                    confidence: 'high' as 'high' | 'low',
-                    isIncome: isIncome
-                });
             }
 
             if (transactions.length === 0) {
-                throw new Error('Nenhuma transação encontrada no arquivo. Verifique se o formato está correto.');
+                const errorSummary = errors.length > 0
+                    ? `\n\nErros encontrados:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? `\n... e mais ${errors.length - 5} erros` : ''}`
+                    : '';
+                reject(new Error(`Nenhuma transação válida encontrada no arquivo.${errorSummary}`));
+                return;
             }
 
-            console.log(`✅ Parser tabular: ${transactions.length} transações extraídas`);
+            console.log(`\n📊 Resumo do parsing:`);
+            console.log(`✅ ${transactions.length} transações extraídas`);
+            if (errors.length > 0) {
+                console.log(`⚠️ ${errors.length} linhas com erro (veja logs acima)`);
+            }
+
             resolve(transactions);
 
         } catch (error: any) {
-            console.error('❌ Erro no parser tabular:', error);
+            console.error('❌ Erro fatal no parser tabular:', error);
             reject(error);
         }
     });
