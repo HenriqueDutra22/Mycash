@@ -7,111 +7,94 @@ import * as pdfjs from 'pdfjs-dist';
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 /**
- * Parser específico para formato Excel Money 2000 e superior.
- * Lê TODAS as linhas sem descartar nenhuma transação.
- * Identifica crédito/débito através de colunas separadas ou valores com sinal.
+ * Parser para arquivos de texto tabular (colunas separadas por espaços).
+ * Formato: Data | Descrição | Valor | Saldo
+ * - Valor vem ANTES do saldo
+ * - Usa vírgula como decimal (formato BR)
+ * - Pode ter sinal negativo
+ * - NUNCA converte erro de parsing em zero
  */
-export const parseExcelMoney2000 = (file: File): Promise<ExtractedTransaction[]> => {
-    return new Promise((resolve, reject) => {
-        Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-                try {
-                    const data = results.data as any[];
-                    const transactions: ExtractedTransaction[] = [];
+export const parseTabularBankStatement = (file: File): Promise<ExtractedTransaction[]> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const text = await file.text();
+            const lines = text.split('\n');
+            const transactions: ExtractedTransaction[] = [];
 
-                    for (const row of data) {
-                        // Identificar colunas de data
-                        const date = row.Data || row.data || row.Date || row['Data do Lançamento'] ||
-                            row['Data Mov.'] || row['Data Movimentação'] || '';
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
 
-                        // Identificar colunas de descrição
-                        const description = row.Descrição || row.descrição || row.Description ||
-                            row.Historico || row.Histórico || row['Histórico'] ||
-                            row.Descricao || row.HISTORICO || row.DESCRIÇÃO ||
-                            'Transação Importada';
+                // Pular linhas vazias ou cabeçalhos
+                if (!line || line.length < 10) continue;
 
-                        // Identificar valores de crédito e débito
-                        let creditValue = 0;
-                        let debitValue = 0;
+                // Regex para extrair data no formato DD/MM/YYYY ou DD/MM/YY
+                const dateMatch = line.match(/(\d{2}\/\d{2}\/\d{2,4})/);
+                if (!dateMatch) continue; // Pular se não tiver data
 
-                        // Cenário 1: Colunas separadas de Crédito e Débito
-                        if (row.Crédito || row.Credito || row.CREDITO || row['Crédito']) {
-                            const creditStr = row.Crédito || row.Credito || row.CREDITO || row['Crédito'] || '0';
-                            creditValue = parseFloat(
-                                creditStr.toString()
-                                    .replace('R$', '')
-                                    .replace(/\./g, '')
-                                    .replace(',', '.')
-                                    .trim()
-                            );
-                        }
+                const dateStr = dateMatch[1];
 
-                        if (row.Débito || row.Debito || row.DEBITO || row['Débito']) {
-                            const debitStr = row.Débito || row.Debito || row.DEBITO || row['Débito'] || '0';
-                            debitValue = parseFloat(
-                                debitStr.toString()
-                                    .replace('R$', '')
-                                    .replace(/\./g, '')
-                                    .replace(',', '.')
-                                    .trim()
-                            );
-                        }
+                // Extrair valores monetários (formato brasileiro: -1.234,56 ou 1.234,56)
+                // Procura por números com vírgula decimal, opcionalmente com pontos de milhar e sinal negativo
+                const valueRegex = /-?\d{1,3}(?:\.\d{3})*,\d{2}/g;
+                const values = line.match(valueRegex);
 
-                        // Cenário 2: Coluna única "Valor" com sinal
-                        if (!creditValue && !debitValue) {
-                            const valueStr = row.Valor || row.valor || row.Amount || row['Valor (R$)'] ||
-                                row.VALOR || row.Value || '0';
-                            const amount = parseFloat(
-                                valueStr.toString()
-                                    .replace('R$', '')
-                                    .replace(/\./g, '')
-                                    .replace(',', '.')
-                                    .trim()
-                            );
-
-                            if (!isNaN(amount)) {
-                                if (amount > 0) {
-                                    creditValue = amount;
-                                } else if (amount < 0) {
-                                    debitValue = Math.abs(amount);
-                                }
-                            }
-                        }
-
-                        // Formatar data
-                        let formattedDate = date;
-                        if (date && date.includes('/')) {
-                            const [d, m, y] = date.split('/');
-                            if (d && m && y) {
-                                const year = y.length === 2 ? `20${y}` : y;
-                                formattedDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                            }
-                        }
-
-                        // Criar transação - NÃO DESCARTAR NENHUMA LINHA
-                        // Mesmo que valor seja 0, incluir para o usuário decidir
-                        const finalAmount = creditValue > 0 ? creditValue : (debitValue > 0 ? debitValue : 0);
-                        const isIncome = creditValue > 0;
-
-                        transactions.push({
-                            description: description || 'Transação Importada',
-                            amount: finalAmount,
-                            date: formattedDate || new Date().toISOString().split('T')[0],
-                            category: 'Geral',
-                            confidence: 'high' as 'high' | 'low',
-                            isIncome: isIncome
-                        });
-                    }
-
-                    resolve(transactions);
-                } catch (error) {
-                    reject(error);
+                if (!values || values.length < 1) {
+                    console.warn(`Linha ${i + 1}: Nenhum valor encontrado - "${line}"`);
+                    continue; // Pular linha sem valores
                 }
-            },
-            error: (error) => reject(error)
-        });
+
+                // O VALOR da transação é o PENÚLTIMO número (antes do saldo)
+                // Se houver apenas 1 número, é o valor
+                const valueStr = values.length >= 2 ? values[values.length - 2] : values[0];
+
+                // Normalizar número brasileiro para formato JS
+                const normalizedValue = valueStr
+                    .replace(/\./g, '')  // Remove pontos de milhar
+                    .replace(',', '.');   // Troca vírgula por ponto
+
+                const amount = parseFloat(normalizedValue);
+
+                // NUNCA converter erro de parsing em zero - lançar erro
+                if (isNaN(amount)) {
+                    throw new Error(`Linha ${i + 1}: Erro ao parsear valor "${valueStr}" - resultado NaN`);
+                }
+
+                // Extrair descrição (texto entre data e primeiro valor)
+                const afterDate = line.substring(line.indexOf(dateStr) + dateStr.length).trim();
+                const firstValueIndex = afterDate.indexOf(valueStr);
+                const description = firstValueIndex > 0
+                    ? afterDate.substring(0, firstValueIndex).trim()
+                    : 'Transação Importada';
+
+                // Formatar data para YYYY-MM-DD
+                const [d, m, y] = dateStr.split('/');
+                const year = y.length === 2 ? `20${y}` : y;
+                const formattedDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+
+                // Identificar se é crédito (positivo) ou débito (negativo)
+                const isIncome = amount > 0;
+
+                transactions.push({
+                    description: description || 'Transação Importada',
+                    amount: Math.abs(amount),
+                    date: formattedDate,
+                    category: 'Geral',
+                    confidence: 'high' as 'high' | 'low',
+                    isIncome: isIncome
+                });
+            }
+
+            if (transactions.length === 0) {
+                throw new Error('Nenhuma transação encontrada no arquivo. Verifique se o formato está correto.');
+            }
+
+            console.log(`✅ Parser tabular: ${transactions.length} transações extraídas`);
+            resolve(transactions);
+
+        } catch (error: any) {
+            console.error('❌ Erro no parser tabular:', error);
+            reject(error);
+        }
     });
 };
 
@@ -243,6 +226,6 @@ export const parsePDFStatement = async (file: File): Promise<ExtractedTransactio
 
 export const isLocalFileCompatible = (file: File): boolean => {
     const extension = file.name.split('.').pop()?.toLowerCase();
-    // Suporta CSV, XLS (que geralmente é exportado como CSV) e PDF
-    return ['csv', 'xls', 'xlsx', 'pdf'].includes(extension || '');
+    // Suporta TXT (tabular), CSV, XLS e PDF
+    return ['txt', 'csv', 'xls', 'xlsx', 'pdf'].includes(extension || '');
 };
