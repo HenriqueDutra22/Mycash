@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { scanReceipt, ExtractedTransaction } from '../services/geminiService';
-import { parseCSVStatement, isLocalFileCompatible, parsePDFStatement, parseExcelMoney2000, parseOFXStatement } from '../services/importService';
+import { parseCSVStatement, isLocalFileCompatible, parsePDFStatement, parseExcelMoney2000 } from '../services/importService';
 import { Transaction, TransactionType } from '../types';
 import { IMAGES } from '../constants';
 
@@ -36,11 +36,8 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
 
         if (extension === 'pdf') {
           localTxs = await parsePDFStatement(file);
-        } else if (extension === 'ofx') {
-          // Parser OFX
-          localTxs = await parseOFXStatement(file);
         } else {
-          // Usar parser Excel Money 2000 para CSVs
+          // Usar parser Excel Money 2000 para CSVs e XLS
           localTxs = await parseExcelMoney2000(file);
         }
 
@@ -154,7 +151,7 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
               onClick={() => fileInputRef.current?.click()}
               className="relative aspect-[4/3] rounded-[32px] border-2 border-dashed border-primary/20 bg-primary/5 p-6 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-primary/40 transition-all"
             >
-              <input ref={fileInputRef} type="file" className="hidden" accept="image/*,.csv,.pdf,.ofx" onChange={handleFileChange} />
+              <input ref={fileInputRef} type="file" className="hidden" accept="image/*,.csv,.xls,.xlsx,.pdf" onChange={handleFileChange} />
 
               <div className="absolute inset-0 rounded-[32px] overflow-hidden opacity-10 group-hover:opacity-20 transition-opacity">
                 <img src={IMAGES.receipt} className="w-full h-full object-cover" alt="" />
@@ -167,7 +164,7 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
               <div className="text-center relative">
                 <p className="text-white font-bold text-lg">Selecionar Arquivo</p>
                 <p className="text-gray-400 text-sm mb-1">Arraste um boleto, recibo ou extrato</p>
-                <p className="text-gray-600 text-[10px] uppercase font-bold tracking-widest">Suporta JPG, PNG, PDF, CSV ou OFX</p>
+                <p className="text-gray-600 text-[10px] uppercase font-bold tracking-widest">Suporta JPG, PNG, PDF, CSV ou XLS</p>
               </div>
             </div>
 
@@ -177,7 +174,7 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
                 <p className="text-sm font-bold">Privacidade Garantida</p>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">
-                Arquivos CSV, OFX e PDF são processados 100% localmente no seu navegador. Nenhuma informação financeira sai do seu dispositivo.
+                Arquivos CSV, XLS e PDF são processados 100% localmente no seu navegador. Nenhuma informação financeira sai do seu dispositivo.
               </p>
             </div>
           </div>

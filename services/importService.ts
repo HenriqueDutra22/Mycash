@@ -241,79 +241,8 @@ export const parsePDFStatement = async (file: File): Promise<ExtractedTransactio
     }
 };
 
-/**
- * Parser para arquivos OFX (Open Financial Exchange).
- * Lê TODAS as transações sem descartar nenhuma.
- */
-export const parseOFXStatement = async (file: File): Promise<ExtractedTransaction[]> => {
-    try {
-        const text = await file.text();
-        const transactions: ExtractedTransaction[] = [];
-
-        // Regex para encontrar blocos de transação STMTTRN
-        const transactionRegex = /<STMTTRN>([\s\S]*?)<\/STMTTRN>/g;
-        let match;
-
-        while ((match = transactionRegex.exec(text)) !== null) {
-            const txBlock = match[1];
-
-            // Extrair campos da transação
-            const typeMatch = txBlock.match(/<TRNTYPE>(.*?)(?:<|$)/);
-            const dateMatch = txBlock.match(/<DTPOSTED>(.*?)(?:<|$)/);
-            const amountMatch = txBlock.match(/<TRNAMT>(.*?)(?:<|$)/);
-            const memoMatch = txBlock.match(/<MEMO>(.*?)(?:<|$)/);
-            const nameMatch = txBlock.match(/<NAME>(.*?)(?:<|$)/);
-
-            const trnType = typeMatch ? typeMatch[1].trim() : '';
-            const dateStr = dateMatch ? dateMatch[1].trim() : '';
-            const amountStr = amountMatch ? amountMatch[1].trim() : '0';
-            const memo = memoMatch ? memoMatch[1].trim() : '';
-            const name = nameMatch ? nameMatch[1].trim() : '';
-
-            // Parsear valor
-            const amount = parseFloat(amountStr);
-            if (isNaN(amount)) continue;
-
-            // Formatar data (OFX usa formato YYYYMMDD ou YYYYMMDDHHMMSS)
-            let formattedDate = new Date().toISOString().split('T')[0];
-            if (dateStr.length >= 8) {
-                const year = dateStr.substring(0, 4);
-                const month = dateStr.substring(4, 6);
-                const day = dateStr.substring(6, 8);
-                formattedDate = `${year}-${month}-${day}`;
-            }
-
-            // Descrição: usar MEMO ou NAME
-            const description = memo || name || 'Transação OFX';
-
-            // Identificar se é crédito ou débito
-            // TRNTYPE pode ser: CREDIT, DEBIT, INT, DIV, FEE, SRVCHG, DEP, ATM, POS, XFER, CHECK, PAYMENT, CASH, DIRECTDEP, DIRECTDEBIT, REPEATPMT, OTHER
-            const creditTypes = ['CREDIT', 'DEP', 'DIRECTDEP', 'INT', 'DIV'];
-            const isIncome = amount > 0 || creditTypes.includes(trnType.toUpperCase());
-
-            transactions.push({
-                description,
-                amount: Math.abs(amount),
-                date: formattedDate,
-                category: 'Geral',
-                confidence: 'high' as 'high' | 'low',
-                isIncome
-            });
-        }
-
-        if (transactions.length === 0) {
-            throw new Error('Nenhuma transação encontrada no arquivo OFX. Verifique se o arquivo está no formato correto.');
-        }
-
-        return transactions;
-    } catch (error: any) {
-        if (error.message.includes('Nenhuma transação')) throw error;
-        console.error('Erro ao ler OFX:', error);
-        throw new Error('Não foi possível processar o arquivo OFX. Verifique se o formato está correto.');
-    }
-};
-
 export const isLocalFileCompatible = (file: File): boolean => {
     const extension = file.name.split('.').pop()?.toLowerCase();
-    return ['csv', 'ofx', 'pdf'].includes(extension || '');
+    // Suporta CSV, XLS (que geralmente é exportado como CSV) e PDF
+    return ['csv', 'xls', 'xlsx', 'pdf'].includes(extension || '');
 };
