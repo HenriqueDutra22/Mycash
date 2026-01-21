@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Transaction, PaymentMethod } from '../types';
+import { Transaction, PaymentMethod, TransactionType } from '../types';
 import { CATEGORIES } from '../constants';
 
 interface EditTransactionModalProps {
@@ -13,13 +13,18 @@ interface EditTransactionModalProps {
 const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction, onClose, onSave, onDelete }) => {
     const [description, setDescription] = useState(transaction.description);
     const [category, setCategory] = useState(transaction.category);
+    const [isIncome, setIsIncome] = useState(transaction.amount > 0);
 
     const handleSave = () => {
         const selectedCat = CATEGORIES.find(c => c.label === category) || CATEGORIES[0];
+        const finalAmount = isIncome ? Math.abs(transaction.amount) : -Math.abs(transaction.amount);
+
         onSave(transaction.id, {
             description,
             category: selectedCat.label,
-            icon: selectedCat.icon
+            icon: selectedCat.icon,
+            amount: finalAmount,
+            type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE
         });
         onClose();
     };
@@ -42,9 +47,23 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
 
                 <div className="flex flex-col gap-8">
                     <div className="bg-white/5 rounded-3xl p-6 border border-white/5 flex flex-col items-center">
+                        <div className="flex bg-white/5 p-1 rounded-2xl mb-4 w-full max-w-[200px]">
+                            <button
+                                onClick={() => setIsIncome(false)}
+                                className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!isIncome ? 'bg-white/10 text-white border border-white/10 shadow-lg' : 'text-gray-500 hover:text-gray-400'}`}
+                            >
+                                Saída
+                            </button>
+                            <button
+                                onClick={() => setIsIncome(true)}
+                                className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isIncome ? 'bg-primary text-black border border-primary shadow-lg shadow-primary/20' : 'text-gray-500 hover:text-gray-400'}`}
+                            >
+                                Entrada
+                            </button>
+                        </div>
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Valor do Lançamento</p>
-                        <h4 className={`text-3xl font-black \${transaction.amount > 0 ? 'text-primary' : 'text-white'}`}>
-                            R$ {Math.abs(transaction.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <h4 className={`text-3xl font-black ${isIncome ? 'text-primary' : 'text-white'}`}>
+                            {isIncome ? '+' : '-'} R$ {Math.abs(transaction.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </h4>
                     </div>
 

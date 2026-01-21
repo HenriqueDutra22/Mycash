@@ -63,21 +63,20 @@ export const scanReceipt = async (base64Image: string): Promise<ExtractedTransac
       
       OBJETIVO: Extrair TODAS as transações financeiras (Entradas e Saídas) da imagem.
       
-      CONTEXTO: A imagem é um extrato bancário (ex: Santander) com colunas de "Data", "Descrição", "Crédito (R$)", "Débito (R$)" e "Saldo (R$)".
+      CONTEXTO: A imagem é um extrato bancário (ex: Santander) com colunas: "Data", "Descrição", "Docto", "Situação", "Crédito (R$)", "Débito (R$)" e "Saldo (R$)".
       
-      REGRAS DE EXTRAÇÃO:
+      REGRAS CRÍTICAS DE EXTRAÇÃO:
       1. IGNORE o resumo superior. Foque na TABELA de lançamentos.
-      2. 'description': Nome fiel ao extrato. Ex: "PIX RECEBIDO...", "DEBITO VISA...", "REMUNERACAO APLICACAO...".
-      3. 'amount': Valor numérico absoluto (sempre positivo no JSON). 
-         - Se houver valor na coluna "Débito", extraia esse valor.
-         - Se houver valor na coluna "Crédito", extraia esse valor.
-         - Remova símbolos monetários e converta vírgula para ponto.
-      4. 'date': Formato YYYY-MM-DD. Use o ano do período (ex: 2026).
-      5. 'category': Atribua uma categoria (Mercado, Lazer, Salário, Investimento, Pix, Outros).
-      6. 'confidence': 'high' ou 'low'.
-      7. 'isIncome': BOOLEANO. 
-         - 'true' se o valor estiver na coluna "Crédito" OU a descrição for "PIX RECEBIDO" ou "REMUNERACAO".
-         - 'false' se o valor estiver na coluna "Débito" OU a descrição for "PIX ENVIADO", "DEBITO VISA", "PAGAMENTO".
+      2. 'description': Nome fiel ao extrato. Ex: "PIX RECEBIDO PULSE...", "DEBITO VISA...".
+      3. 'amount': Valor numérico absoluto (Sempre positivo). 
+         - SE o valor estiver alinhado abaixo de "Débito (R$)", ele é uma SAÍDA.
+         - SE o valor estiver alinhado abaixo de "Crédito (R$)", ele é uma ENTRADA.
+         - IMPORTANTE: No Santander, o Débito pode aparecer com sinal negativo (ex: -26,62), extraia 26.62 e marque isIncome: false.
+      4. 'date': Formato YYYY-MM-DD. Use o ano corrente ou do período (ex: 2026).
+      5. 'category': Atribua uma categoria lógica.
+      6. 'isIncome': BOOLEANO. 
+         - 'true' se o valor for CRÉDITO, RENDIMENTO ou PIX RECEBIDO.
+         - 'false' se o valor for DÉBITO, PAGAMENTO ou PIX ENVIADO.
 
       Retorne APENAS o JSON.`
     ]);

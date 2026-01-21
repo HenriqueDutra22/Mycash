@@ -23,7 +23,8 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
 
   const handleSave = () => {
     const cleanAmountStr = amount.replace(/\./g, '').replace(',', '.');
-    const numericAmount = parseFloat(cleanAmountStr) * (type === TransactionType.EXPENSE ? -1 : 1);
+    const isIncome = type === TransactionType.INCOME;
+    const numericAmount = parseFloat(cleanAmountStr) * (isIncome ? 1 : -1);
 
     if (isNaN(numericAmount) || numericAmount === 0) {
       alert('Por favor, insira um valor válido.');
@@ -65,27 +66,38 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
 
       <main className="flex-1 px-6 py-4 flex flex-col gap-10">
         <div className="flex flex-col items-center py-6">
+          <div className="flex bg-white/5 p-1 rounded-2xl mb-6 w-full max-w-[240px]">
+            <button
+              onClick={() => setType(TransactionType.EXPENSE)}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${type === TransactionType.EXPENSE ? 'bg-white/10 text-white border border-white/10 shadow-lg' : 'text-gray-500 hover:text-gray-400'}`}
+            >
+              Saída (-)
+            </button>
+            <button
+              onClick={() => setType(TransactionType.INCOME)}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${type === TransactionType.INCOME ? 'bg-primary text-black border border-primary shadow-lg shadow-primary/20' : 'text-gray-500 hover:text-gray-400'}`}
+            >
+              Entrada (+)
+            </button>
+          </div>
           <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.4em] mb-4">Montante Financeiro</p>
           <div className="flex items-center gap-3">
-            <span className="text-3xl font-black text-primary/40">R$</span>
+            <span className={`text-3xl font-black transition-colors ${type === TransactionType.INCOME ? 'text-primary' : 'text-primary/40'}`}>R$</span>
             <input
               autoFocus
               type="text"
               inputMode="numeric"
               value={amount}
               onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                const value = e.target.value.replace(/\D/g, '');
                 const numericValue = parseInt(value || '0', 10) / 100;
-
-                // Format directly to display BRL style: 1.000,00
                 const formatted = numericValue.toLocaleString('pt-BR', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2
                 });
-
                 setAmount(formatted);
               }}
-              className="bg-transparent border-none text-6xl font-black text-center focus:ring-0 p-0 w-full max-w-[400px] placeholder:text-gray-900"
+              className={`bg-transparent border-none text-6xl font-black text-center focus:ring-0 p-0 w-full max-w-[400px] placeholder:text-gray-900 transition-colors ${type === TransactionType.INCOME ? 'text-primary' : 'text-white'}`}
               placeholder="0,00"
             />
           </div>
@@ -105,10 +117,10 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
                 <button
                   key={mode.id}
                   onClick={() => {
-                    setType(mode.type);
                     setPaymentMethod(mode.method);
+                    setType(mode.type);
                   }}
-                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${type === mode.type && paymentMethod === mode.method ? 'bg-white text-black border-white shadow-lg' : 'bg-white/[0.03] border-white/5 text-gray-500'}`}
+                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${paymentMethod === mode.method && (mode.id === 'PIX_SENT' ? type === TransactionType.EXPENSE : mode.id === 'PIX_RECEIVED' ? type === TransactionType.INCOME : true) ? 'bg-white text-black border-white shadow-lg' : 'bg-white/[0.03] border-white/5 text-gray-500'}`}
                 >
                   <span className="material-symbols-outlined text-xl">{mode.icon}</span>
                   <span className="text-[10px] font-black uppercase tracking-wider">{mode.label}</span>
