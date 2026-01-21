@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { scanReceipt, ExtractedTransaction } from '../services/geminiService';
-import { parseCSVStatement, isLocalFileCompatible, parsePDFStatement } from '../services/importService';
+import { parseCSVStatement, isLocalFileCompatible, parsePDFStatement, parseExcelMoney2000 } from '../services/importService';
 import { Transaction, TransactionType } from '../types';
 import { IMAGES } from '../constants';
 
@@ -37,7 +37,8 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
         if (extension === 'pdf') {
           localTxs = await parsePDFStatement(file);
         } else {
-          localTxs = await parseCSVStatement(file);
+          // Usar parser Excel Money 2000 para CSVs
+          localTxs = await parseExcelMoney2000(file);
         }
 
         if (localTxs && localTxs.length > 0) {

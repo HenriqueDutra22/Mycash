@@ -392,49 +392,51 @@ const App: React.FC = () => {
   const bulkAddTransactions = async (newTxs: Omit<Transaction, 'id'>[]) => {
     if (session?.user) {
       try {
-        const dbTxs = newTxs.map(tx => ({
-          description: tx.description,
-          amount: tx.amount,
-          type: tx.type,
-          category: tx.category,
-          date: tx.date,
-          time: tx.time,
-          icon: tx.icon,
-          user_id: session.user.id,
-          payment_method: tx.paymentMethod,
-          card_id: tx.cardId || null,
-          installments_current: tx.installments?.current || null,
-          installments_total: tx.installments?.total || null,
-          is_recurring: tx.isRecurring || false,
-          recurring_day: tx.recurringDay || null
-        }));
+        console.log(`📦 Importando ${newTxs.length} transações via RPC insert_transaction...`);
 
-        const { data, error } = await supabase
-          .from('transactions')
-          .insert(dbTxs)
-          .select();
+        let successCount = 0;
+        let errorCount = 0;
+        const errors: string[] = [];
 
-        if (error) throw error;
-        if (data) {
-          const formatted = data.map(d => ({
-            ...d,
-            paymentMethod: d.payment_method,
-            cardId: d.card_id,
-            installments: d.installments_total ? {
-              current: d.installments_current,
-              total: d.installments_total
-            } : undefined,
-            isRecurring: d.is_recurring,
-            recurringDay: d.recurring_day
-          }));
-          setTransactions([...formatted, ...transactions]);
+        // Chamar insert_transaction para cada linha individualmente
+        for (const tx of newTxs) {
+          try {
+            const isIncome = tx.type === TransactionType.INCOME;
+
+            await createTransaction({
+              p_user_id: session.user.id,
+              p_description: tx.description,
+              p_credit: isIncome ? Math.abs(tx.amount) : null,
+              p_debit: !isIncome ? Math.abs(tx.amount) : null,
+              p_date: tx.date
+            });
+
+            successCount++;
+          } catch (err: any) {
+            errorCount++;
+            errors.push(`${tx.description}: ${err.message || 'Erro desconhecido'}`);
+            console.error(`❌ Erro ao importar transação "${tx.description}":`, err);
+          }
         }
+
+        console.log(`✅ Importação concluída: ${successCount} sucesso, ${errorCount} erros`);
+
+        if (errorCount > 0) {
+          alert(`Importação parcial: ${successCount} transações salvas, ${errorCount} com erro.\n\nErros:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`);
+        } else {
+          alert(`✅ ${successCount} transações importadas com sucesso!`);
+        }
+
+        // Recarregar transações e saldo
+        fetchTransactions(session.user.id);
+        fetchBalance(session.user.id);
+
       } catch (err) {
-        console.error('Error saving bulk transactions:', err);
-        const tempTxs = newTxs.map(tx => ({ ...tx, id: Math.random().toString(36).substr(2, 9) } as Transaction));
-        setTransactions([...tempTxs, ...transactions]);
+        console.error('Error in bulk import:', err);
+        alert(`Erro ao importar transações: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
       }
     } else {
+      // Dev mode fallback
       const tempTxs = newTxs.map(tx => ({ ...tx, id: Math.random().toString(36).substr(2, 9) } as Transaction));
       setTransactions([...tempTxs, ...transactions]);
     }
