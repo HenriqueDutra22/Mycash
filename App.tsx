@@ -399,9 +399,14 @@ const App: React.FC = () => {
         const errors: string[] = [];
 
         // Chamar insert_transaction para cada linha individualmente
-        for (const tx of newTxs) {
+        for (let i = 0; i < newTxs.length; i++) {
+          const tx = newTxs[i];
+          const txNum = i + 1;
+
           try {
             const isIncome = tx.type === TransactionType.INCOME;
+
+            console.log(`📝 [${txNum}/${newTxs.length}] Inserindo: ${tx.description} - ${isIncome ? '+' : '-'}${Math.abs(tx.amount)}`);
 
             await createTransaction({
               p_user_id: session.user.id,
@@ -412,10 +417,13 @@ const App: React.FC = () => {
             });
 
             successCount++;
+            console.log(`✅ [${txNum}/${newTxs.length}] Sucesso!`);
           } catch (err: any) {
             errorCount++;
-            errors.push(`${tx.description}: ${err.message || 'Erro desconhecido'}`);
-            console.error(`❌ Erro ao importar transação "${tx.description}":`, err);
+            const errorMsg = `${tx.description}: ${err.message || 'Erro desconhecido'}`;
+            errors.push(errorMsg);
+            console.error(`❌ [${txNum}/${newTxs.length}] Erro ao importar "${tx.description}":`, err);
+            // Continua para próxima transação
           }
         }
 
