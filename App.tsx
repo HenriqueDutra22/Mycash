@@ -17,6 +17,7 @@ import Layout from './components/Layout';
 import AuthView from './components/AuthView';
 import EditTransactionModal from './components/EditTransactionModal';
 import { supabase } from './services/supabase';
+import { createTransaction } from './services/transactionService';
 import { Session } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
@@ -27,6 +28,7 @@ const App: React.FC = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [dbBalance, setDbBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isGhostMode, setIsGhostMode] = useState(false);
   const [user, setUser] = useState<UserProfile>({
@@ -55,6 +57,7 @@ const App: React.FC = () => {
         fetchTransactions(session.user.id);
         fetchCards(session.user.id);
         fetchGoals(session.user.id);
+        fetchBalance(session.user.id);
         updateUserProfile(session.user);
       } else {
         setLoading(false);
@@ -69,6 +72,7 @@ const App: React.FC = () => {
         fetchTransactions(session.user.id);
         fetchCards(session.user.id);
         fetchGoals(session.user.id);
+        fetchBalance(session.user.id);
         updateUserProfile(session.user);
       } else {
         setTransactions([]);
@@ -141,7 +145,6 @@ const App: React.FC = () => {
           isRecurring: tx.is_recurring,
           recurringDay: tx.recurring_day
         }));
-        // Fix: Do not load INITIAL_TRANSACTIONS if user has no data. Let it be empty.
         setTransactions(formatted);
       } else {
         setTransactions([]);
@@ -151,6 +154,30 @@ const App: React.FC = () => {
       setTransactions(INITIAL_TRANSACTIONS);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBalance = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_balance')
+        .select('balance')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // Record not found
+          setDbBalance(0);
+        } else {
+          throw error;
+        }
+      }
+
+      if (data) {
+        setDbBalance(Number(data.balance) || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching balance from view:', err);
     }
   };
 
@@ -288,68 +315,28 @@ const App: React.FC = () => {
     setCards(cards.filter(c => c.id !== id));
   };
 
-  const totalBalance = useMemo(() => {
-    return (transactions || []).reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0);
-  }, [transactions]);
-
-  const accountBalance = useMemo(() => {
-    return (transactions || [])
-      .filter(tx => tx?.paymentMethod !== PaymentMethod.CREDIT)
-      .reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0) || 0;
-  }, [transactions]);
-
-  const creditBalance = useMemo(() => {
-    return (transactions || [])
-      .filter(tx => tx?.paymentMethod === PaymentMethod.CREDIT)
-      .reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0) || 0;
-  }, [transactions]);
-
   const addTransaction = async (newTx: Omit<Transaction, 'id'>) => {
     if (session?.user) {
       try {
-        // Sanitize payload for Supabase (only existing columns)
-        const dbTx = {
-          description: newTx.description,
-          amount: newTx.amount,
-          type: newTx.type,
-          category: newTx.category,
-          date: newTx.date,
-          time: newTx.time,
-          icon: newTx.icon,
-          user_id: session.user.id,
-          payment_method: newTx.paymentMethod,
-          card_id: newTx.cardId || null,
-          installments_current: newTx.installments?.current || null,
-          installments_total: newTx.installments?.total || null,
-          is_recurring: newTx.isRecurring || false,
-          recurring_day: newTx.recurringDay || null
-        };
+        const isIncome = newTx.type === TransactionType.INCOME;
 
-        const { data, error } = await supabase
-          .from('transactions')
-          .insert([dbTx])
-          .select()
-          .single();
+        // Chamada via RPC conforme solicitado
+        await createTransaction({
+          p_user_id: session.user.id,
+          p_description: newTx.description,
+          p_credit: isIncome ? Math.abs(newTx.amount) : null,
+          p_debit: !isIncome ? Math.abs(newTx.amount) : null,
+          p_date: newTx.date
+        });
 
-        if (error) throw error;
-        if (data) {
-          const formatted = {
-            ...data,
-            paymentMethod: data.payment_method,
-            cardId: data.card_id,
-            installments: data.installments_total ? {
-              current: data.installments_current,
-              total: data.installments_total
-            } : undefined,
-            isRecurring: data.is_recurring,
-            recurringDay: data.recurring_day
-          };
-          setTransactions([formatted, ...transactions]);
-        }
+        // Recarregar transações e saldo para refletir a mudança
+        fetchTransactions(session.user.id);
+        fetchBalance(session.user.id);
+
       } catch (err) {
-        console.error('Error saving transaction:', err);
-        alert(`Erro ao salvar no banco (DEBUG): ${JSON.stringify(err)}`);
-        // Fallback local para não perder o dado na tela
+        console.error('Error saving transaction via RPC:', err);
+        alert(`Erro ao salvar transação: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+        // Fallback local caso queira manter a experiência offline
         const tx = { ...newTx, id: Math.random().toString(36).substr(2, 9) } as Transaction;
         setTransactions([tx, ...transactions]);
       }
@@ -501,9 +488,7 @@ const App: React.FC = () => {
         return <HomeView
           user={user}
           transactions={transactions}
-          totalBalance={totalBalance}
-          accountBalance={accountBalance}
-          creditBalance={creditBalance}
+          dbBalance={dbBalance}
           isGhostMode={isGhostMode}
           setIsGhostMode={setIsGhostMode}
           onNewTransaction={() => setCurrentView('NEW_TRANSACTION')}
@@ -571,9 +556,7 @@ const App: React.FC = () => {
         return <HomeView
           user={user}
           transactions={transactions}
-          totalBalance={totalBalance}
-          accountBalance={accountBalance}
-          creditBalance={creditBalance}
+          dbBalance={dbBalance}
           isGhostMode={isGhostMode}
           setIsGhostMode={setIsGhostMode}
           onNewTransaction={() => setCurrentView('NEW_TRANSACTION')}
