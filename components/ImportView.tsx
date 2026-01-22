@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { scanReceipt, ExtractedTransaction } from '../services/geminiService';
-import { parseCSVStatement, isLocalFileCompatible, parsePDFStatement, parseTabularBankStatement } from '../services/importService';
+import { parseCSVStatement, isLocalFileCompatible, parsePDFStatement, parseTabularBankStatement, parseStandardCSV } from '../services/importService';
 import { Transaction, TransactionType } from '../types';
 import { IMAGES } from '../constants';
 
@@ -36,6 +36,9 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
 
         if (extension === 'pdf') {
           localTxs = await parsePDFStatement(file);
+        } else if (extension === 'csv') {
+          // Usar parser CSV padronizado para formato oficial: date,description,credit,debit
+          localTxs = await parseStandardCSV(file);
         } else {
           // Usar parser de texto tabular para arquivos de extrato bancário
           localTxs = await parseTabularBankStatement(file);

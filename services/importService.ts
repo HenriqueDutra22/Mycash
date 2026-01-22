@@ -127,6 +127,148 @@ export const parseTabularBankStatement = (file: File): Promise<ExtractedTransact
 };
 
 /**
+ * Parser para CSV no formato oficial padronizado.
+ * Formato: date,description,credit,debit
+ * - Importa TODA linha que contenha uma data válida
+ * - Não aplica filtros inteligentes
+ * - Assume que o arquivo já está normalizado
+ */
+export const parseStandardCSV = (file: File): Promise<ExtractedTransaction[]> => {
+    return new Promise((resolve, reject) => {
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                try {
+                    const data = results.data as any[];
+                    const transactions: ExtractedTransaction[] = [];
+                    const errors: string[] = [];
+
+                    console.log(`📄 Processando ${data.length} linhas do CSV...`);
+
+                    for (let i = 0; i < data.length; i++) {
+                        const row = data[i];
+                        const lineNum = i + 2; // +2 porque linha 1 é header
+
+                        try {
+                            // Extrair campos do formato oficial
+                            const dateStr = row.date || row.Date || '';
+                            const description = row.description || row.Description || '';
+                            const creditStr = row.credit || row.Credit || '';
+                            const debitStr = row.debit || row.Debit || '';
+
+                            // Validar data - se não tem data válida, pular
+                            if (!dateStr || dateStr.trim() === '') {
+                                console.warn(`⚠️ Linha ${lineNum} ignorada (sem data)`);
+                                continue;
+                            }
+
+                            // Validar formato de data (aceita YYYY-MM-DD ou DD/MM/YYYY)
+                            const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) || /^\d{2}\/\d{2}\/\d{2,4}$/.test(dateStr);
+                            if (!isValidDate) {
+                                const error = `❌ Linha ${lineNum}: Data inválida "${dateStr}"`;
+                                console.error(error);
+                                errors.push(error);
+                                continue;
+                            }
+
+                            // Processar valores de crédito e débito
+                            const creditValue = creditStr ? parseFloat(
+                                creditStr.toString()
+                                    .replace('R$', '')
+                                    .replace(/\./g, '')
+                                    .replace(',', '.')
+                                    .trim()
+                            ) : 0;
+
+                            const debitValue = debitStr ? parseFloat(
+                                debitStr.toString()
+                                    .replace('R$', '')
+                                    .replace(/\./g, '')
+                                    .replace(',', '.')
+                                    .trim()
+                            ) : 0;
+
+                            // Determinar se é entrada ou saída
+                            let amount = 0;
+                            let isIncome = false;
+
+                            if (creditValue > 0 && debitValue > 0) {
+                                // Se ambos têm valor, usar o maior
+                                if (creditValue > debitValue) {
+                                    amount = creditValue;
+                                    isIncome = true;
+                                } else {
+                                    amount = debitValue;
+                                    isIncome = false;
+                                }
+                            } else if (creditValue > 0) {
+                                amount = creditValue;
+                                isIncome = true;
+                            } else if (debitValue > 0) {
+                                amount = debitValue;
+                                isIncome = false;
+                            } else {
+                                const error = `❌ Linha ${lineNum}: Nenhum valor válido em credit ou debit`;
+                                console.error(error);
+                                errors.push(error);
+                                continue;
+                            }
+
+                            // Formatar data para YYYY-MM-DD se necessário
+                            let formattedDate = dateStr;
+                            if (dateStr.includes('/')) {
+                                const [d, m, y] = dateStr.split('/');
+                                const year = y.length === 2 ? `20${y}` : y;
+                                formattedDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                            }
+
+                            transactions.push({
+                                description: description || 'Transação Importada',
+                                amount: Math.abs(amount),
+                                date: formattedDate,
+                                category: 'Geral',
+                                confidence: 'high' as 'high' | 'low',
+                                isIncome: isIncome
+                            });
+
+                            console.log(`✅ Linha ${lineNum}: ${description} - ${isIncome ? '+' : '-'}${Math.abs(amount)}`);
+
+                        } catch (error: any) {
+                            const errorMsg = `❌ Linha ${lineNum}: Erro inesperado - ${error.message}`;
+                            console.error(errorMsg);
+                            errors.push(errorMsg);
+                            // Continua para próxima linha
+                        }
+                    }
+
+                    if (transactions.length === 0) {
+                        const errorSummary = errors.length > 0
+                            ? `\n\nErros encontrados:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? `\n... e mais ${errors.length - 5} erros` : ''}`
+                            : '';
+                        reject(new Error(`Nenhuma transação válida encontrada no CSV.${errorSummary}`));
+                        return;
+                    }
+
+                    console.log(`\n📊 Resumo do parsing CSV:`);
+                    console.log(`✅ ${transactions.length} transações extraídas`);
+                    if (errors.length > 0) {
+                        console.log(`⚠️ ${errors.length} linhas com erro (veja logs acima)`);
+                    }
+
+                    resolve(transactions);
+
+                } catch (error: any) {
+                    console.error('❌ Erro fatal no parser CSV:', error);
+                    reject(error);
+                }
+            },
+            error: (error) => reject(error)
+        });
+    });
+};
+
+/**
  * Parser para CSVs bancários genéricos.
  */
 export const parseCSVStatement = (file: File): Promise<ExtractedTransaction[]> => {
