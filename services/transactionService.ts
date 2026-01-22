@@ -7,6 +7,7 @@ export interface CreateTransactionParams {
     p_credit: number | null;
     p_debit: number | null;
     p_date: string;
+    p_category?: string;
 }
 
 /**

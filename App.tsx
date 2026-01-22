@@ -326,7 +326,8 @@ const App: React.FC = () => {
           p_description: newTx.description,
           p_credit: isIncome ? Math.abs(newTx.amount) : null,
           p_debit: !isIncome ? Math.abs(newTx.amount) : null,
-          p_date: newTx.date
+          p_date: newTx.date,
+          p_category: newTx.category || 'Outros'
         });
 
         // Recarregar transações e saldo para refletir a mudança
@@ -413,7 +414,8 @@ const App: React.FC = () => {
               p_description: tx.description,
               p_credit: isIncome ? Math.abs(tx.amount) : null,
               p_debit: !isIncome ? Math.abs(tx.amount) : null,
-              p_date: tx.date
+              p_date: tx.date,
+              p_category: tx.category || 'Outros'
             });
 
             successCount++;
