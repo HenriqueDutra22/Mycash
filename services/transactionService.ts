@@ -4,8 +4,8 @@ import { supabase } from './supabase';
 export interface CreateTransactionParams {
     p_user_id: string;
     p_description: string;
-    p_credit: number | null;
-    p_debit: number | null;
+    p_amount: number;
+    p_type: 'credit' | 'debit';
     p_date: string;
     p_category?: string;
 }

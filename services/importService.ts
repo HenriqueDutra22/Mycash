@@ -81,8 +81,20 @@ export const parseTabularBankStatement = (file: File): Promise<ExtractedTransact
                     const year = y.length === 2 ? `20${y}` : y;
                     const formattedDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
 
-                    // Identificar se é crédito (positivo) ou débito (negativo)
-                    const isIncome = amount > 0;
+                    // Identificar se é crédito ou débito com regras específicas
+                    const descUpper = description.toUpperCase();
+                    let type: 'credit' | 'debit';
+
+                    if (descUpper.includes('PIX RECEBIDO')) {
+                        type = 'credit';
+                    } else if (descUpper.includes('PIX ENVIADO') || descUpper.includes('DEBITO') || descUpper.includes('BOLETO')) {
+                        type = 'debit';
+                    } else {
+                        // Fallback pelo sinal
+                        type = amount > 0 ? 'credit' : 'debit';
+                    }
+
+                    const isIncome = type === 'credit';
 
                     transactions.push({
                         description: description || 'Transação Importada',
@@ -90,7 +102,8 @@ export const parseTabularBankStatement = (file: File): Promise<ExtractedTransact
                         date: formattedDate,
                         category: 'Geral',
                         confidence: 'high' as 'high' | 'low',
-                        isIncome: isIncome
+                        isIncome: isIncome,
+                        type: type
                     });
 
                     console.log(`✅ Linha ${lineNum}: ${description} - ${isIncome ? '+' : '-'}${Math.abs(amount)}`);
@@ -223,13 +236,17 @@ export const parseStandardCSV = (file: File): Promise<ExtractedTransaction[]> =>
                                 formattedDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
                             }
 
+                            // Definir type final baseado no resultado anterior
+                            const type: 'credit' | 'debit' = isIncome ? 'credit' : 'debit';
+
                             transactions.push({
                                 description: description || 'Transação Importada',
                                 amount: Math.abs(amount),
                                 date: formattedDate,
                                 category: 'Geral',
                                 confidence: 'high' as 'high' | 'low',
-                                isIncome: isIncome
+                                isIncome: isIncome,
+                                type: type
                             });
 
                             console.log(`✅ Linha ${lineNum}: ${description} - ${isIncome ? '+' : '-'}${Math.abs(amount)}`);
@@ -301,13 +318,15 @@ export const parseCSVStatement = (file: File): Promise<ExtractedTransaction[]> =
                             }
                         }
 
+                        const isIncome = amount > 0;
                         return {
                             description: description || 'Transação Importada',
-                            amount: isNaN(amount) ? 0 : amount,
+                            amount: isNaN(amount) ? 0 : Math.abs(amount),
                             date: formattedDate,
                             category: 'Geral',
                             confidence: 'high' as 'high' | 'low',
-                            isIncome: amount > 0
+                            isIncome: isIncome,
+                            type: (isIncome ? 'credit' : 'debit') as 'credit' | 'debit',
                         };
                     }).filter(tx => tx.amount !== 0);
 
@@ -370,13 +389,25 @@ export const parsePDFStatement = async (file: File): Promise<ExtractedTransactio
                     formattedDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
                 }
 
+                const descUpper = desc.toUpperCase();
+                let type: 'credit' | 'debit';
+
+                if (descUpper.includes('PIX RECEBIDO')) {
+                    type = 'credit';
+                } else if (descUpper.includes('PIX ENVIADO') || descUpper.includes('DEBITO') || descUpper.includes('BOLETO')) {
+                    type = 'debit';
+                } else {
+                    type = amount > 0 ? 'credit' : 'debit';
+                }
+
                 transactions.push({
                     description: desc.trim(),
-                    amount: amount,
+                    amount: Math.abs(amount),
                     date: formattedDate,
                     category: 'Geral',
                     confidence: 'high',
-                    isIncome: amount > 0
+                    isIncome: type === 'credit',
+                    type: type
                 });
             }
             if (transactions.length > 0) break;

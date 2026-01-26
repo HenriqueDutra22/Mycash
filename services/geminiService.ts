@@ -26,6 +26,7 @@ export interface ExtractedTransaction {
   category: string;
   confidence: 'high' | 'low';
   isIncome?: boolean;
+  type?: 'credit' | 'debit';
 }
 
 export const scanReceipt = async (base64Image: string): Promise<ExtractedTransaction[]> => {

@@ -16,12 +16,14 @@ interface HomeViewProps {
 }
 
 const HomeView: React.FC<HomeViewProps> = ({ user, transactions, dbBalance, isGhostMode, setIsGhostMode, onNewTransaction, onShowAnalytics, onShowHistory, onEditTransaction, cards }) => {
-  const groupedTransactions = transactions.reduce((acc: any, tx) => {
-    const date = tx.date;
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(tx);
-    return acc;
-  }, {});
+  const groupedTransactions = React.useMemo(() => {
+    return transactions.reduce((acc: any, tx) => {
+      const date = tx.date;
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(tx);
+      return acc;
+    }, {});
+  }, [transactions]);
 
   const formatDate = (dateStr: string) => {
     const today = new Date().toISOString().split('T')[0];

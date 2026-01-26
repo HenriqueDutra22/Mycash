@@ -110,7 +110,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
       }
     });
 
-    return Object.values(dailyData);
+    return Object.values(dailyData).sort((a, b) => a.date.localeCompare(b.date));
   }, [transactions]);
 
   const insights = useMemo(() => {

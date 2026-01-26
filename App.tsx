@@ -132,7 +132,7 @@ const App: React.FC = () => {
     try {
       if (updateLoading) setLoading(true);
       const { data, error } = await supabase
-        .from('transactions')
+        .from('user_transactions_view')
         .select('*')
         .eq('user_id', userId)
         .order('date', { ascending: false })
@@ -143,6 +143,10 @@ const App: React.FC = () => {
       if (data) {
         const formatted = data.map(tx => ({
           ...tx,
+          // Mapear signed_amount para amount (frontend espera sinal)
+          amount: tx.signed_amount,
+          // Mapear type do banco ('credit'/'debit') para TransactionType
+          type: tx.type === 'credit' ? TransactionType.INCOME : TransactionType.EXPENSE,
           paymentMethod: tx.payment_method,
           cardId: tx.card_id,
           installments: tx.installments_total ? {
@@ -325,12 +329,12 @@ const App: React.FC = () => {
       try {
         const isIncome = newTx.type === TransactionType.INCOME;
 
-        // Chamada via RPC conforme solicitado
+        // Chamada via RPC com nova assinatura
         await createTransaction({
           p_user_id: session.user.id,
           p_description: newTx.description,
-          p_credit: isIncome ? Math.abs(newTx.amount) : null,
-          p_debit: !isIncome ? Math.abs(newTx.amount) : null,
+          p_amount: Math.abs(newTx.amount), // Sempre positivo para o banco
+          p_type: isIncome ? 'credit' : 'debit',
           p_date: newTx.date,
           p_category: newTx.category || 'Outros'
         });
@@ -380,6 +384,9 @@ const App: React.FC = () => {
           .eq('id', id);
 
         if (error) throw error;
+
+        // Sincronizar saldo após edição
+        fetchBalance(session.user.id);
       } catch (err) {
         console.error('Error updating transaction:', err);
       }
@@ -391,6 +398,8 @@ const App: React.FC = () => {
   const deleteTransaction = async (id: string) => {
     if (session?.user) {
       await supabase.from('transactions').delete().eq('id', id);
+      // Sincronizar saldo após exclusão
+      fetchBalance(session.user.id);
     }
     setTransactions(transactions.filter(t => t.id !== id));
   };
@@ -417,8 +426,8 @@ const App: React.FC = () => {
             await createTransaction({
               p_user_id: session.user.id,
               p_description: tx.description,
-              p_credit: isIncome ? Math.abs(tx.amount) : null,
-              p_debit: !isIncome ? Math.abs(tx.amount) : null,
+              p_amount: Math.abs(tx.amount), // Sempre positivo
+              p_type: isIncome ? 'credit' : 'debit',
               p_date: tx.date,
               p_category: tx.category || 'Outros'
             });
