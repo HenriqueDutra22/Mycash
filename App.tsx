@@ -53,15 +53,7 @@ const App: React.FC = () => {
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      if (session?.user) {
-        fetchTransactions(session.user.id);
-        fetchCards(session.user.id);
-        fetchGoals(session.user.id);
-        fetchBalance(session.user.id);
-        updateUserProfile(session.user);
-      } else {
-        setLoading(false);
-      }
+      // Removed redundant fetching here as it's handled by onAuthStateChange on subscription
     };
 
     initAuth();
@@ -163,7 +155,7 @@ const App: React.FC = () => {
         .from('user_balance')
         .select('balance')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         if (error.code === 'PGRST116') { // Record not found
