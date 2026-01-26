@@ -61,15 +61,13 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        fetchTransactions(session.user.id);
-        fetchCards(session.user.id);
-        fetchGoals(session.user.id);
-        fetchBalance(session.user.id);
+        fetchAllData(session.user.id);
         updateUserProfile(session.user);
       } else {
         setTransactions([]);
         setCards([]);
         setGoals([]);
+        setDbBalance(0);
         setLoading(false);
       }
     });
@@ -86,6 +84,22 @@ const App: React.FC = () => {
       monthlyLimit: sbUser.user_metadata?.monthly_limit || prev.monthlyLimit,
       accentColor: sbUser.user_metadata?.accent_color || prev.accentColor
     }));
+  };
+
+  const fetchAllData = async (userId: string) => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        fetchTransactions(userId, false),
+        fetchCards(userId, false),
+        fetchGoals(userId, false),
+        fetchBalance(userId, false)
+      ]);
+    } catch (err) {
+      console.error('Error fetching all data:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
@@ -114,8 +128,9 @@ const App: React.FC = () => {
     }
   };
 
-  const fetchTransactions = async (userId: string) => {
+  const fetchTransactions = async (userId: string, updateLoading = true) => {
     try {
+      if (updateLoading) setLoading(true);
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -145,35 +160,33 @@ const App: React.FC = () => {
       console.error('Error fetching transactions:', err);
       setTransactions(INITIAL_TRANSACTIONS);
     } finally {
-      setLoading(false);
+      if (updateLoading) setLoading(false);
     }
   };
 
-  const fetchBalance = async (userId: string) => {
+  const fetchBalance = async (userId: string, _unused = true) => {
     try {
+      // Use .select().limit(1) to avoid 406 errors when 0 rows are returned
       const { data, error } = await supabase
         .from('user_balance')
         .select('balance')
         .eq('user_id', userId)
-        .maybeSingle();
+        .limit(1);
 
-      if (error) {
-        if (error.code === 'PGRST116') { // Record not found
-          setDbBalance(0);
-        } else {
-          throw error;
-        }
-      }
+      if (error) throw error;
 
-      if (data) {
-        setDbBalance(Number(data.balance) || 0);
+      if (data && data.length > 0) {
+        setDbBalance(Number(data[0].balance) || 0);
+      } else {
+        setDbBalance(0);
       }
     } catch (err) {
       console.error('Error fetching balance from view:', err);
+      setDbBalance(0);
     }
   };
 
-  const fetchCards = async (userId: string) => {
+  const fetchCards = async (userId: string, _unused = true) => {
     try {
       const { data, error } = await supabase
         .from('cards')
@@ -187,7 +200,7 @@ const App: React.FC = () => {
     }
   };
 
-  const fetchGoals = async (userId: string) => {
+  const fetchGoals = async (userId: string, _unused = true) => {
     try {
       const { data, error } = await supabase
         .from('goals')
