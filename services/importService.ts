@@ -1,4 +1,3 @@
-
 import Papa from 'papaparse';
 import { ExtractedTransaction } from './geminiService';
 import * as pdfjs from 'pdfjs-dist';
@@ -143,6 +142,7 @@ export const parseTabularBankStatement = (file: File): Promise<ExtractedTransact
  * Parser para CSV no formato oficial padronizado.
  * Formato: date,description,credit,debit
  * - Importa TODA linha que contenha uma data válida
+ * - Suporta ponto OU vírgula como decimal automaticamente
  * - Não aplica filtros inteligentes
  * - Assume que o arquivo já está normalizado
  */
@@ -185,22 +185,32 @@ export const parseStandardCSV = (file: File): Promise<ExtractedTransaction[]> =>
                                 continue;
                             }
 
-                            // Processar valores de crédito e débito
-                            const creditValue = creditStr ? parseFloat(
-                                creditStr.toString()
-                                    .replace('R$', '')
-                                    .replace(/\./g, '')
-                                    .replace(',', '.')
-                                    .trim()
-                            ) : 0;
+                            // Função para converter valor, detectando automaticamente o formato
+                            const parseValue = (valueStr: string): number => {
+                                if (!valueStr || valueStr.trim() === '') return 0;
 
-                            const debitValue = debitStr ? parseFloat(
-                                debitStr.toString()
-                                    .replace('R$', '')
-                                    .replace(/\./g, '')
-                                    .replace(',', '.')
-                                    .trim()
-                            ) : 0;
+                                const cleaned = valueStr.toString().replace('R$', '').trim();
+
+                                // Detectar formato: se tem vírgula, é formato BR (1.234,56)
+                                // Se tem apenas ponto, é formato US (1234.56)
+                                if (cleaned.includes(',')) {
+                                    // Formato brasileiro: 1.234,56
+                                    return parseFloat(
+                                        cleaned
+                                            .replace(/\./g, '')  // Remove pontos de milhar
+                                            .replace(',', '.')   // Troca vírgula por ponto
+                                    );
+                                } else {
+                                    // Formato americano/internacional: 1234.56 ou 1,234.56
+                                    return parseFloat(
+                                        cleaned.replace(/,/g, '')  // Remove vírgulas de milhar
+                                    );
+                                }
+                            };
+
+                            // Processar valores de crédito e débito
+                            const creditValue = parseValue(creditStr);
+                            const debitValue = parseValue(debitStr);
 
                             // Determinar se é entrada ou saída
                             let amount = 0;
@@ -228,6 +238,14 @@ export const parseStandardCSV = (file: File): Promise<ExtractedTransaction[]> =>
                                 continue;
                             }
 
+                            // Validar se o parsing foi bem-sucedido
+                            if (isNaN(amount) || amount === 0) {
+                                const error = `❌ Linha ${lineNum}: Erro ao parsear valores (credit: "${creditStr}", debit: "${debitStr}")`;
+                                console.error(error);
+                                errors.push(error);
+                                continue;
+                            }
+
                             // Formatar data para YYYY-MM-DD se necessário
                             let formattedDate = dateStr;
                             if (dateStr.includes('/')) {
@@ -249,7 +267,7 @@ export const parseStandardCSV = (file: File): Promise<ExtractedTransaction[]> =>
                                 type: type
                             });
 
-                            console.log(`✅ Linha ${lineNum}: ${description} - ${isIncome ? '+' : '-'}${Math.abs(amount)}`);
+                            console.log(`✅ Linha ${lineNum}: ${description} - ${isIncome ? '+' : '-'}${Math.abs(amount).toFixed(2)}`);
 
                         } catch (error: any) {
                             const errorMsg = `❌ Linha ${lineNum}: Erro inesperado - ${error.message}`;
