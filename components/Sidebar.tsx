@@ -13,6 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, user, onPl
   const menuItems = [
     { id: 'HOME', icon: 'grid_view', label: 'Início' },
     { id: 'PLANNING', icon: 'event_repeat', label: 'Planos' },
+    { id: 'TRANSACTIONS', icon: 'receipt_long', label: 'Extrato' },
     { id: 'GOALS', icon: 'emoji_events', label: 'Metas' },
     { id: 'ANALYTICS', icon: 'bar_chart', label: 'Análise' },
     { id: 'WALLET', icon: 'wallet', label: 'Cartões' },
@@ -31,8 +32,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, user, onPl
             key={item.id}
             onClick={() => onViewChange(item.id as ViewType)}
             className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${currentView === item.id
-                ? 'bg-primary text-[#0a0f0c] font-bold emerald-glow'
-                : 'text-gray-400 hover:bg-white/5 hover:text-white'
+              ? 'bg-primary text-[#0a0f0c] font-bold emerald-glow'
+              : 'text-gray-400 hover:bg-white/5 hover:text-white'
               }`}
           >
             <span className={`material-symbols-outlined ${currentView === item.id ? 'filled' : ''}`} style={currentView === item.id ? { fontVariationSettings: "'FILL' 1" } : {}}>

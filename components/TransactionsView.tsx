@@ -151,7 +151,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, onBac
                 />
 
                 <SummaryCard
-                    title="Cartão"
+                    title="Cartão Crédito"
                     value={summary.credit.total}
                     count={summary.credit.count}
                     icon="credit_card"
@@ -159,6 +159,17 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, onBac
                     onClick={() => setActiveFilter('CREDIT')}
                     colorClass="text-purple-400"
                     bgClass="bg-purple-400/10"
+                />
+
+                <SummaryCard
+                    title="Débito"
+                    value={summary.debit.total}
+                    count={summary.debit.count}
+                    icon="account_balance_wallet"
+                    isActive={activeFilter === 'DEBIT'}
+                    onClick={() => setActiveFilter('DEBIT')}
+                    colorClass="text-blue-400"
+                    bgClass="bg-blue-400/10"
                 />
             </div>
 
