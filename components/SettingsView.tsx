@@ -27,9 +27,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateProfile, onBa
     type: 'BOTH'
   });
 
-  const handleAddCard = () => {
+  const handleAddCard = async () => {
     if (!newCard.name || !newCard.lastDigits) return;
-    onAddCard(newCard);
+    await onAddCard(newCard);
     setShowAddCard(false);
     setNewCard({ name: '', lastDigits: '', brand: 'Visa', color: '#19e65e', type: 'BOTH' });
   };

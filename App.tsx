@@ -322,12 +322,17 @@ const App: React.FC = () => {
             ...data,
             lastDigits: data.last_digits
           };
-          setCards([formatted, ...cards]);
+          setCards(prev => [formatted, ...prev]);
           alert('✅ Cartão cadastrado com sucesso!');
+        } else {
+          alert('⚠️ Erro: O banco de dados não retornou os dados do cartão.');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error adding card:', err);
+        alert(`❌ Erro ao cadastrar cartão: ${err.message || 'Erro desconhecido'}`);
       }
+    } else {
+      alert('⚠️ Erro: Você precisa estar logado para cadastrar um cartão.');
     }
   };
 
