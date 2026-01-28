@@ -233,6 +233,40 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions, car
 
         {hasScanned && scannedTxs.length > 0 && !isProcessing && (
           <div className="flex flex-col gap-6 animate-fadeIn">
+            {/* Card Selection at the Top */}
+            {cards.length > 0 && (
+              <div className="flex flex-col gap-3 glass bg-white/5 p-5 rounded-[32px] border border-primary/20 animate-slide-up shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-primary text-xl">credit_card</span>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Vincular Importação ao:</p>
+                  </div>
+                  {!selectedCardId && (
+                    <span className="text-[9px] font-bold text-red-400 uppercase animate-pulse">Opcional</span>
+                  )}
+                </div>
+                <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-2 px-2 ml-0 scrollbar-none">
+                  <button
+                    onClick={() => setSelectedCardId(null)}
+                    className={`flex-shrink-0 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${!selectedCardId ? 'bg-primary text-black border-primary' : 'bg-white/5 text-gray-400 border-white/5'}`}
+                  >
+                    Nenhum
+                  </button>
+                  {cards.map(card => (
+                    <button
+                      key={card.id}
+                      onClick={() => setSelectedCardId(card.id)}
+                      className={`flex-shrink-0 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-3 ${selectedCardId === card.id ? 'bg-white text-black border-white' : 'bg-white/5 text-gray-400 border-white/5'}`}
+                      style={selectedCardId === card.id ? { backgroundColor: card.color, color: 'white', borderColor: card.color, boxShadow: `0 10px 20px ${card.color}44` } : {}}
+                    >
+                      <div className="size-2 rounded-full shadow-lg" style={{ backgroundColor: card.color }}></div>
+                      {card.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between pl-1">
               <div className="flex flex-col">
                 <h2 className="text-2xl font-bold">{scannedTxs.length} Transações</h2>
@@ -290,35 +324,6 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions, car
               ))}
             </div>
 
-            {cards.length > 0 && (
-              <div className="flex flex-col gap-3 glass bg-white/5 p-6 rounded-[32px] border border-white/10 animate-slide-up">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="material-symbols-outlined text-primary">credit_card</span>
-                  <p className="text-xs font-black uppercase tracking-widest text-gray-400">Vincular estas transações ao:</p>
-                </div>
-                <div className="flex gap-3 overflow-x-auto pb-4 -mx-2 px-2 scrollbar-none">
-                  <button
-                    onClick={() => setSelectedCardId(null)}
-                    className={`flex-shrink-0 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${!selectedCardId ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(25,230,94,0.3)]' : 'bg-white/5 text-gray-500 border-white/5'}`}
-                  >
-                    Nenhum Cartão
-                  </button>
-                  {cards.map(card => (
-                    <button
-                      key={card.id}
-                      onClick={() => setSelectedCardId(card.id)}
-                      className={`flex-shrink-0 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-3 ${selectedCardId === card.id ? 'bg-white text-black border-white shadow-xl' : 'bg-white/5 text-gray-500 border-white/5'}`}
-                      style={selectedCardId === card.id ? { backgroundColor: card.color, color: 'white', borderColor: card.color, boxShadow: `0 10px 20px ${card.color}33` } : {}}
-                    >
-                      <div className="size-2 rounded-full ring-2 ring-white/20" style={{ backgroundColor: card.color }}></div>
-                      {card.name}
-                      <span className="opacity-60 font-mono tracking-tighter">••{card.lastDigits}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <button
               onClick={handleConfirm}
               className="w-full h-16 bg-primary text-[#0a0f0c] font-black rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all text-lg flex items-center justify-center gap-3"
@@ -333,8 +338,7 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions, car
               Cancelar
             </button>
           </div>
-        )
-        }
+        )}
 
         {
           hasScanned && scannedTxs.length === 0 && !error && !isProcessing && (

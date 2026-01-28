@@ -162,31 +162,32 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
             </div>
 
 
-            {(paymentMethod === PaymentMethod.CREDIT || paymentMethod === PaymentMethod.DEBIT) && (
+            {cards.length > 0 && (
               <div className="flex flex-col gap-2 animate-slide-up">
-                <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] pl-1">Escolher Cartão</label>
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  {cards.length > 0 ? (
-                    cards.map(card => (
-                      <button
-                        key={card.id}
-                        onClick={() => setCardId(card.id)}
-                        className={`flex-none w-32 h-20 rounded-2xl border-2 flex flex-col justify-between p-3 transition-all ${cardId === card.id ? 'border-primary bg-primary/10' : 'border-white/5 bg-white/[0.03]'}`}
-                        style={{ borderLeft: `4px solid ${card.color || '#fff'}` }}
-                      >
-                        <div className="flex justify-between items-start">
-                          <span className="text-[8px] font-black uppercase text-gray-400">{card.brand}</span>
-                          <div className={`size-1.5 rounded-full ${cardId === card.id ? 'bg-primary' : 'bg-white/10'}`}></div>
-                        </div>
-                        <p className="text-[10px] font-black text-white truncate">{card.name}</p>
-                        <p className="text-[8px] text-gray-500 font-mono">•••• {card.lastDigits}</p>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="text-[10px] text-gray-500 italic p-4 bg-white/5 rounded-2xl w-full">
-                      Nenhum cartão cadastrado. Adicione um nas configurações.
-                    </div>
-                  )}
+                <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] pl-1">Vincular Cartão/Conta</label>
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+                  <button
+                    onClick={() => setCardId('')}
+                    className={`flex-none w-32 h-20 rounded-2xl border-2 flex flex-col justify-center items-center p-3 transition-all ${!cardId ? 'border-primary bg-primary/10' : 'border-white/5 bg-white/[0.03] text-gray-500'}`}
+                  >
+                    <span className="material-symbols-outlined text-xl mb-1">block</span>
+                    <p className="text-[9px] font-black uppercase tracking-widest">Nenhum</p>
+                  </button>
+                  {cards.map(card => (
+                    <button
+                      key={card.id}
+                      onClick={() => setCardId(card.id)}
+                      className={`flex-none w-32 h-20 rounded-2xl border-2 flex flex-col justify-between p-3 transition-all ${cardId === card.id ? 'border-primary bg-white/5 shadow-lg shadow-primary/5' : 'border-white/5 bg-white/[0.03]'}`}
+                      style={{ borderLeft: `6px solid ${card.color || '#fff'}` }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="text-[8px] font-black uppercase text-gray-500">{card.brand}</span>
+                        <div className={`size-1.5 rounded-full ${cardId === card.id ? 'bg-primary animate-pulse' : 'bg-white/10'}`}></div>
+                      </div>
+                      <p className="text-[10px] font-black text-white truncate">{card.name}</p>
+                      <p className="text-[8px] text-gray-500 font-mono">•••• {card.lastDigits}</p>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
