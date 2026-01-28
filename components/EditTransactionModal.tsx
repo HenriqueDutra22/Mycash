@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Transaction, PaymentMethod, TransactionType } from '../types';
+import { Transaction, PaymentMethod, TransactionType, Card } from '../types';
 import { CATEGORIES } from '../constants';
 
 interface EditTransactionModalProps {
@@ -8,12 +7,14 @@ interface EditTransactionModalProps {
     onClose: () => void;
     onSave: (id: string, updates: Partial<Transaction>) => void;
     onDelete: (id: string) => void;
+    cards: Card[];
 }
 
-const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction, onClose, onSave, onDelete }) => {
+const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction, onClose, onSave, onDelete, cards }) => {
     const [description, setDescription] = useState(transaction.description);
     const [category, setCategory] = useState(transaction.category);
     const [isIncome, setIsIncome] = useState(transaction.amount > 0);
+    const [selectedCardId, setSelectedCardId] = useState<string | null>(transaction.cardId || null);
 
     const handleSave = () => {
         const selectedCat = CATEGORIES.find(c => c.label === category) || CATEGORIES[0];
@@ -24,7 +25,8 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
             category: selectedCat.label,
             icon: selectedCat.icon,
             amount: finalAmount,
-            type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE
+            type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
+            cardId: selectedCardId || null
         });
         onClose();
     };
@@ -96,6 +98,31 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
                             ))}
                         </div>
                     </div>
+
+                    {cards.length > 0 && (
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Vincular Cartão</label>
+                            <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
+                                <button
+                                    onClick={() => setSelectedCardId(null)}
+                                    className={`flex-shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${!selectedCardId ? 'bg-white text-black border-white' : 'bg-white/5 text-gray-500 border-white/5'}`}
+                                >
+                                    Nenhum
+                                </button>
+                                {cards.map(card => (
+                                    <button
+                                        key={card.id}
+                                        onClick={() => setSelectedCardId(card.id)}
+                                        className={`flex-shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all flex items-center gap-2 ${selectedCardId === card.id ? 'bg-white text-black border-white' : 'bg-white/5 text-gray-500 border-white/5'}`}
+                                        style={selectedCardId === card.id ? { backgroundColor: card.color, color: 'white', borderColor: card.color } : {}}
+                                    >
+                                        <div className="size-1.5 rounded-full" style={{ backgroundColor: card.color }}></div>
+                                        {card.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex gap-4 mt-4">
                         <button

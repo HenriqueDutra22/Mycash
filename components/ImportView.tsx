@@ -258,6 +258,12 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions, car
               {scannedTxs.map((tx, idx) => (
                 <div key={idx} className="glass bg-white/5 p-4 rounded-2xl flex items-center justify-between group relative overflow-hidden">
                   {tx.isIncome && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/40"></div>}
+                  {selectedCardId && (
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-1 opacity-60"
+                      style={{ backgroundColor: cards.find(c => c.id === selectedCardId)?.color }}
+                    ></div>
+                  )}
                   <div className="flex items-center gap-4">
                     <button
                       onClick={() => toggleTxType(idx)}

@@ -146,9 +146,20 @@ const HomeView: React.FC<HomeViewProps> = ({ user, transactions, dbBalance, isGh
                                 <span className="text-[8px] font-black uppercase text-primary">
                                   {tx.paymentMethod === PaymentMethod.PIX ? (tx.amount > 0 ? 'Pix Recebido' : 'Pix Enviado') :
                                     tx.paymentMethod === PaymentMethod.DEBIT ? 'Débito' :
-                                      tx.paymentMethod === PaymentMethod.CREDIT ? (tx.cardId ? cards.find(c => c.id === tx.cardId)?.name : 'Crédito') :
+                                      tx.paymentMethod === PaymentMethod.CREDIT ? 'Crédito' :
                                         tx.paymentMethod}
                                 </span>
+                                {tx.cardId && cards.find(c => c.id === tx.cardId) && (
+                                  <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-full border border-white/5 ml-1">
+                                    <div
+                                      className="size-1 rounded-full"
+                                      style={{ backgroundColor: cards.find(c => c.id === tx.cardId)?.color }}
+                                    ></div>
+                                    <span className="text-[7px] font-black uppercase tracking-tighter text-white/50">
+                                      {cards.find(c => c.id === tx.cardId)?.name}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </>
                           )}

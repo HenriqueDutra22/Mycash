@@ -221,6 +221,20 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, onBac
                                                                 tx.paymentMethod === PaymentMethod.DEBIT ? 'Débito' :
                                                                     tx.paymentMethod === PaymentMethod.CREDIT ? 'Crédito' : tx.paymentMethod}
                                                         </span>
+                                                        {tx.cardId && cards.find(c => c.id === tx.cardId) && (
+                                                            <>
+                                                                <span className="w-0.5 h-0.5 bg-gray-500 rounded-full"></span>
+                                                                <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                                                                    <div
+                                                                        className="size-1.5 rounded-full"
+                                                                        style={{ backgroundColor: cards.find(c => c.id === tx.cardId)?.color }}
+                                                                    ></div>
+                                                                    <span className="text-[8px] font-black uppercase tracking-tighter text-white/60">
+                                                                        {cards.find(c => c.id === tx.cardId)?.name}
+                                                                    </span>
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

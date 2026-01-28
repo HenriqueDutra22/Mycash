@@ -654,6 +654,7 @@ const App: React.FC = () => {
           onClose={() => setEditingTransaction(null)}
           onSave={updateTransaction}
           onDelete={deleteTransaction}
+          cards={cards}
         />
       )}
     </Layout>
