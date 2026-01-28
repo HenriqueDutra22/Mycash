@@ -162,9 +162,9 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
             </div>
 
 
-            {cards.length > 0 && (
-              <div className="flex flex-col gap-2 animate-slide-up">
-                <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] pl-1">Vincular Cartão/Conta</label>
+            <div className="flex flex-col gap-2 animate-slide-up">
+              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] pl-1">Vincular Cartão/Conta</label>
+              {cards.length > 0 ? (
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
                   <button
                     onClick={() => setCardId('')}
@@ -189,8 +189,19 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div
+                  onClick={() => alert('Vá em Perfil > Gerenciar Cartões para adicionar um cartão.')}
+                  className="bg-white/5 border border-white/10 border-dashed p-4 rounded-2xl flex items-center justify-between cursor-pointer hover:bg-white/[0.08] transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-gray-600">credit_card_off</span>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nenhum cartão cadastrado</p>
+                  </div>
+                  <span className="material-symbols-outlined text-primary text-sm">add_circle</span>
+                </div>
+              )}
+            </div>
 
             {paymentMethod === PaymentMethod.CREDIT && (
               <div className="flex flex-col gap-2 animate-slide-up">

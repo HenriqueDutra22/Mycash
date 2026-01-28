@@ -234,18 +234,16 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions, car
         {hasScanned && scannedTxs.length > 0 && !isProcessing && (
           <div className="flex flex-col gap-6 animate-fadeIn">
             {/* Card Selection at the Top */}
-            {cards.length > 0 && (
-              <div className="flex flex-col gap-3 glass bg-white/5 p-5 rounded-[32px] border border-primary/20 animate-slide-up shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary text-xl">credit_card</span>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Vincular Importação ao:</p>
-                  </div>
-                  {!selectedCardId && (
-                    <span className="text-[9px] font-bold text-red-400 uppercase animate-pulse">Opcional</span>
-                  )}
+            <div className="flex flex-col gap-3 glass bg-white/5 p-5 rounded-[32px] border border-primary/10 animate-slide-up shadow-2xl">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary text-xl">credit_card</span>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Vincular Importação ao:</p>
                 </div>
-                <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-2 px-2 ml-0 scrollbar-none">
+              </div>
+
+              {cards.length > 0 ? (
+                <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-none">
                   <button
                     onClick={() => setSelectedCardId(null)}
                     className={`flex-shrink-0 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${!selectedCardId ? 'bg-primary text-black border-primary' : 'bg-white/5 text-gray-400 border-white/5'}`}
@@ -264,8 +262,18 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions, car
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 p-4 rounded-2xl">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nenhum cartão encontrado</p>
+                  <button
+                    onClick={() => alert('Vá em Perfil > Gerenciar Cartões para adicionar um cartão.')}
+                    className="text-[9px] font-black uppercase text-primary bg-primary/10 px-3 py-1.5 rounded-lg"
+                  >
+                    Como adicionar?
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center justify-between pl-1">
               <div className="flex flex-col">
