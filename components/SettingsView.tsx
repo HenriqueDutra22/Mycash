@@ -99,8 +99,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onUpdateProfile, onBa
                 </div>
               </div>
               <div className="flex-1 bg-white/[0.02] border border-white/5 p-4 rounded-2xl text-center">
-                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">Membro desde</p>
-                <p className="text-xs font-black text-white uppercase">Jan 2026</p>
+                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">Última Importação</p>
+                <p className="text-[10px] font-black text-white uppercase break-words">
+                  {user.lastImportAt
+                    ? new Date(user.lastImportAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+                    : 'Nunca'}
+                </p>
               </div>
             </div>
           </div>

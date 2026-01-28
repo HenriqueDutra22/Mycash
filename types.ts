@@ -57,4 +57,5 @@ export interface UserProfile {
   avatar: string;
   monthlyLimit: number;
   accentColor: string;
+  lastImportAt?: string | null;
 }

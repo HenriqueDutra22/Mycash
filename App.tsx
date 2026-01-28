@@ -82,7 +82,8 @@ const App: React.FC = () => {
       name: sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] || prev.name,
       avatar: sbUser.user_metadata?.avatar_url || prev.avatar,
       monthlyLimit: sbUser.user_metadata?.monthly_limit || prev.monthlyLimit,
-      accentColor: sbUser.user_metadata?.accent_color || prev.accentColor
+      accentColor: sbUser.user_metadata?.accent_color || prev.accentColor,
+      lastImportAt: sbUser.user_metadata?.last_import_at || prev.lastImportAt
     }));
   };
 
@@ -410,6 +411,7 @@ const App: React.FC = () => {
         console.log(`📦 Importando ${newTxs.length} transações via RPC insert_transaction...`);
 
         let successCount = 0;
+        let duplicateCount = 0;
         let errorCount = 0;
         const errors: string[] = [];
 
@@ -423,7 +425,7 @@ const App: React.FC = () => {
 
             console.log(`📝 [${txNum}/${newTxs.length}] Inserindo: ${tx.description} - ${isIncome ? '+' : '-'}${Math.abs(tx.amount)}`);
 
-            await createTransaction({
+            const result = await createTransaction({
               p_user_id: session.user.id,
               p_description: tx.description,
               p_amount: Math.abs(tx.amount), // Sempre positivo
@@ -432,8 +434,13 @@ const App: React.FC = () => {
               p_category: tx.category || 'Outros'
             });
 
-            successCount++;
-            console.log(`✅ [${txNum}/${newTxs.length}] Sucesso!`);
+            if (result && result.success === false && result.error === 'duplicate') {
+              duplicateCount++;
+              console.log(`⚠️ [${txNum}/${newTxs.length}] Duplicata pulada.`);
+            } else {
+              successCount++;
+              console.log(`✅ [${txNum}/${newTxs.length}] Sucesso!`);
+            }
           } catch (err: any) {
             errorCount++;
             const errorMsg = `${tx.description}: ${err.message || 'Erro desconhecido'}`;
@@ -443,13 +450,25 @@ const App: React.FC = () => {
           }
         }
 
-        console.log(`✅ Importação concluída: ${successCount} sucesso, ${errorCount} erros`);
+        console.log(`✅ Importação concluída: ${successCount} sucesso, ${duplicateCount} duplicatas, ${errorCount} erros`);
 
-        if (errorCount > 0) {
-          alert(`Importação parcial: ${successCount} transações salvas, ${errorCount} com erro.\n\nErros:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`);
-        } else {
-          alert(`✅ ${successCount} transações importadas com sucesso!`);
+        // Registrar timestamp da última importação
+        const now = new Date().toISOString();
+        const { error: profileError } = await supabase.auth.updateUser({
+          data: { last_import_at: now }
+        });
+
+        if (!profileError) {
+          setUser(prev => ({ ...prev, lastImportAt: now }));
+          // Também atualizar na tabela profiles se tivermos acesso (normalmente via trigger, mas aqui forçamos se necessário)
+          await supabase.from('profiles').update({ last_import_at: now }).eq('id', session.user.id);
         }
+
+        let summary = `✅ ${successCount} transações importadas.`;
+        if (duplicateCount > 0) summary += `\n⚠️ ${duplicateCount} duplicatas foram ignoradas.`;
+        if (errorCount > 0) summary += `\n❌ ${errorCount} erros ocorreram.`;
+
+        alert(summary);
 
         // Recarregar transações e saldo
         fetchTransactions(session.user.id);
