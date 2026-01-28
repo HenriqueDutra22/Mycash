@@ -2,21 +2,23 @@
 import React, { useState, useRef } from 'react';
 import { scanReceipt, ExtractedTransaction } from '../services/geminiService';
 import { parseCSVStatement, isLocalFileCompatible, parsePDFStatement, parseTabularBankStatement, parseStandardCSV } from '../services/importService';
-import { Transaction, TransactionType } from '../types';
+import { Transaction, TransactionType, Card } from '../types';
 import { IMAGES } from '../constants';
 
 interface ImportViewProps {
   onBack: () => void;
   onSaveTransactions: (txs: Omit<Transaction, 'id'>[]) => void;
+  cards: Card[];
 }
 
-const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) => {
+const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions, cards }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingMode, setProcessingMode] = useState<'AI' | 'Local' | null>(null);
   const [scannedTxs, setScannedTxs] = useState<ExtractedTransaction[]>([]);
   const [hasScanned, setHasScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,7 +135,8 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       category: st.category || 'Outros',
       type: st.isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
-      icon: st.isIncome ? 'payments' : 'receipt_long'
+      icon: st.isIncome ? 'payments' : 'receipt_long',
+      cardId: selectedCardId || undefined
     }));
     onSaveTransactions(finalTxs);
   };
@@ -281,6 +284,35 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
               ))}
             </div>
 
+            {cards.length > 0 && (
+              <div className="flex flex-col gap-3 glass bg-white/5 p-6 rounded-[32px] border border-white/10 animate-slide-up">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="material-symbols-outlined text-primary">credit_card</span>
+                  <p className="text-xs font-black uppercase tracking-widest text-gray-400">Vincular estas transações ao:</p>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-4 -mx-2 px-2 scrollbar-none">
+                  <button
+                    onClick={() => setSelectedCardId(null)}
+                    className={`flex-shrink-0 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${!selectedCardId ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(25,230,94,0.3)]' : 'bg-white/5 text-gray-500 border-white/5'}`}
+                  >
+                    Nenhum Cartão
+                  </button>
+                  {cards.map(card => (
+                    <button
+                      key={card.id}
+                      onClick={() => setSelectedCardId(card.id)}
+                      className={`flex-shrink-0 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-3 ${selectedCardId === card.id ? 'bg-white text-black border-white shadow-xl' : 'bg-white/5 text-gray-500 border-white/5'}`}
+                      style={selectedCardId === card.id ? { backgroundColor: card.color, color: 'white', borderColor: card.color, boxShadow: `0 10px 20px ${card.color}33` } : {}}
+                    >
+                      <div className="size-2 rounded-full ring-2 ring-white/20" style={{ backgroundColor: card.color }}></div>
+                      {card.name}
+                      <span className="opacity-60 font-mono tracking-tighter">••{card.lastDigits}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <button
               onClick={handleConfirm}
               className="w-full h-16 bg-primary text-[#0a0f0c] font-black rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all text-lg flex items-center justify-center gap-3"
@@ -295,18 +327,21 @@ const ImportView: React.FC<ImportViewProps> = ({ onBack, onSaveTransactions }) =
               Cancelar
             </button>
           </div>
-        )}
+        )
+        }
 
-        {hasScanned && scannedTxs.length === 0 && !error && !isProcessing && (
-          <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-            <span className="material-symbols-outlined text-6xl mb-4">search_off</span>
-            <p className="font-bold text-lg">Nenhuma transação encontrada</p>
-            <p className="text-sm">Tente outro arquivo ou formato.</p>
-            <button onClick={() => setHasScanned(false)} className="mt-4 text-primary font-bold">Voltar</button>
-          </div>
-        )}
-      </main>
-    </div>
+        {
+          hasScanned && scannedTxs.length === 0 && !error && !isProcessing && (
+            <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
+              <span className="material-symbols-outlined text-6xl mb-4">search_off</span>
+              <p className="font-bold text-lg">Nenhuma transação encontrada</p>
+              <p className="text-sm">Tente outro arquivo ou formato.</p>
+              <button onClick={() => setHasScanned(false)} className="mt-4 text-primary font-bold">Voltar</button>
+            </div>
+          )
+        }
+      </main >
+    </div >
   );
 };
 

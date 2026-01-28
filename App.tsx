@@ -449,7 +449,8 @@ const App: React.FC = () => {
               p_amount: Math.abs(tx.amount), // Sempre positivo
               p_type: isIncome ? 'credit' : 'debit',
               p_date: tx.date,
-              p_category: tx.category || 'Outros'
+              p_category: tx.category || 'Outros',
+              p_card_id: tx.cardId
             });
 
             if (result && result.success === false && result.error === 'duplicate') {
@@ -595,6 +596,7 @@ const App: React.FC = () => {
         return <ImportView
           onBack={() => setCurrentView('NEW_TRANSACTION')}
           onSaveTransactions={bulkAddTransactions}
+          cards={cards}
         />;
       case 'WALLET':
         return <WalletView

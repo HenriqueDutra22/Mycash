@@ -8,6 +8,7 @@ export interface CreateTransactionParams {
     p_type: 'credit' | 'debit';
     p_date: string;
     p_category?: string;
+    p_card_id?: string;
 }
 
 /**
