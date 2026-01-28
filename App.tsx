@@ -199,7 +199,13 @@ const App: React.FC = () => {
         .eq('user_id', userId);
 
       if (error) throw error;
-      if (data) setCards(data);
+      if (data) {
+        const formatted = data.map(c => ({
+          ...c,
+          lastDigits: c.last_digits
+        }));
+        setCards(formatted);
+      }
     } catch (err) {
       console.error('Error fetching cards:', err);
     }
@@ -297,7 +303,7 @@ const App: React.FC = () => {
       try {
         const dbCard = {
           name: newCard.name,
-          lastDigits: newCard.lastDigits,
+          last_digits: newCard.lastDigits,
           brand: newCard.brand,
           color: newCard.color,
           type: newCard.type,
@@ -311,7 +317,14 @@ const App: React.FC = () => {
           .single();
 
         if (error) throw error;
-        if (data) setCards([data, ...cards]);
+        if (data) {
+          const formatted = {
+            ...data,
+            lastDigits: data.last_digits
+          };
+          setCards([formatted, ...cards]);
+          alert('✅ Cartão cadastrado com sucesso!');
+        }
       } catch (err) {
         console.error('Error adding card:', err);
       }
