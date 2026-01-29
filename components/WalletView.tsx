@@ -30,7 +30,8 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
         amount: '0,00',
         category: 'shopping',
         date: new Date().toISOString().split('T')[0],
-        installments: 1
+        installments: 1,
+        type: TransactionType.EXPENSE
     });
 
     const handleAddCard = async () => {
@@ -42,7 +43,8 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
 
     const handleAddPurchase = () => {
         const cleanAmountStr = purchaseForm.amount.replace(/\./g, '').replace(',', '.');
-        const numericAmount = parseFloat(cleanAmountStr) * -1; // Purchases are usually expenses
+        const isIncome = purchaseForm.type === TransactionType.INCOME;
+        const numericAmount = parseFloat(cleanAmountStr) * (isIncome ? 1 : -1);
 
         if (isNaN(numericAmount) || numericAmount === 0 || !selectedCardId) {
             alert('Por favor, insira um valor válido.');
@@ -57,7 +59,7 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
             date: purchaseForm.date,
             time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
             category: selectedCat.label,
-            type: TransactionType.EXPENSE,
+            type: purchaseForm.type,
             icon: selectedCat.icon,
             paymentMethod: PaymentMethod.CREDIT,
             cardId: selectedCardId,
@@ -258,6 +260,21 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                         <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-8">No cartão: {cards.find(c => c.id === selectedCardId)?.name}</p>
 
                         <div className="flex flex-col gap-6">
+                            <div className="flex bg-white/5 p-1 rounded-2xl mb-2 w-full max-w-[200px] mx-auto">
+                                <button
+                                    onClick={() => setPurchaseForm({ ...purchaseForm, type: TransactionType.EXPENSE })}
+                                    className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${purchaseForm.type === TransactionType.EXPENSE ? 'bg-white/10 text-white border border-white/10' : 'text-gray-500'}`}
+                                >
+                                    Saída
+                                </button>
+                                <button
+                                    onClick={() => setPurchaseForm({ ...purchaseForm, type: TransactionType.INCOME })}
+                                    className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${purchaseForm.type === TransactionType.INCOME ? 'bg-primary text-black' : 'text-gray-500'}`}
+                                >
+                                    Entrada
+                                </button>
+                            </div>
+
                             <div className="flex flex-col gap-4">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Descrição</label>

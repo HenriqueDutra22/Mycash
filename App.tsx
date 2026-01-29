@@ -347,53 +347,27 @@ const App: React.FC = () => {
     if (session?.user) {
       try {
         const isIncome = newTx.type === TransactionType.INCOME;
-        const installmentsTotal = newTx.installments?.total || 1;
 
-        if (installmentsTotal > 1) {
-          console.log(`📦 Criando ${installmentsTotal} parcelas para: ${newTx.description}`);
+        // Chamada via RPC simples, sem "inteligência" de parcelamento ou divisão
+        await createTransaction({
+          p_user_id: session.user.id,
+          p_description: newTx.description,
+          p_amount: Math.abs(newTx.amount), // Sempre positivo para o banco
+          p_type: isIncome ? 'credit' : 'debit',
+          p_date: newTx.date,
+          p_category: newTx.category || 'Outros',
+          p_card_id: newTx.cardId,
+          p_installments_current: newTx.installments?.current || 1,
+          p_installments_total: newTx.installments?.total || 1
+        });
 
-          for (let i = 0; i < installmentsTotal; i++) {
-            const installmentDate = new Date(newTx.date);
-            installmentDate.setMonth(installmentDate.getMonth() + i);
-
-            const formatDate = installmentDate.toISOString().split('T')[0];
-            const installmentDesc = installmentsTotal > 1 ? `${newTx.description} (${i + 1}/${installmentsTotal})` : newTx.description;
-
-            await createTransaction({
-              p_user_id: session.user.id,
-              p_description: installmentDesc,
-              p_amount: Math.abs(newTx.amount / installmentsTotal), // Divide o valor pelas parcelas
-              p_type: isIncome ? 'credit' : 'debit',
-              p_date: formatDate,
-              p_category: newTx.category || 'Outros',
-              p_card_id: newTx.cardId,
-              p_installments_current: i + 1,
-              p_installments_total: installmentsTotal
-            });
-          }
-        } else {
-          // Chamada via RPC com nova assinatura
-          await createTransaction({
-            p_user_id: session.user.id,
-            p_description: newTx.description,
-            p_amount: Math.abs(newTx.amount), // Sempre positivo para o banco
-            p_type: isIncome ? 'credit' : 'debit',
-            p_date: newTx.date,
-            p_category: newTx.category || 'Outros',
-            p_card_id: newTx.cardId,
-            p_installments_current: newTx.installments?.current,
-            p_installments_total: newTx.installments?.total
-          });
-        }
-
-        // Recarregar transações e saldo para refletir a mudança
+        // Recarregar transações e saldo
         fetchTransactions(session.user.id);
         fetchBalance(session.user.id);
 
       } catch (err) {
         console.error('Error saving transaction via RPC:', err);
         alert(`Erro ao salvar transação: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-        // Fallback local caso queira manter a experiência offline
         const tx = { ...newTx, id: Math.random().toString(36).substr(2, 9) } as Transaction;
         setTransactions([tx, ...transactions]);
       }
@@ -568,6 +542,15 @@ const App: React.FC = () => {
     }
   };
 
+  const displayBalance = useMemo(() => {
+    // Calculamos o saldo ignorando gastos no crédito, para manter o saldo "líquido" (Dinheiro/Pix/Débito)
+    return transactions.reduce((acc, tx) => {
+      // Se for gasto no crédito, não abate do saldo principal (pois é dívida futura)
+      if (tx.paymentMethod === PaymentMethod.CREDIT && tx.amount < 0) return acc;
+      return acc + tx.amount;
+    }, 0);
+  }, [transactions]);
+
   const renderView = () => {
     if (loading && session) return (
       <div className="flex items-center justify-center h-screen bg-[#0a0f0c]">
@@ -580,7 +563,7 @@ const App: React.FC = () => {
         return <HomeView
           user={user}
           transactions={transactions}
-          dbBalance={dbBalance}
+          dbBalance={displayBalance}
           isGhostMode={isGhostMode}
           setIsGhostMode={setIsGhostMode}
           onNewTransaction={() => setCurrentView('NEW_TRANSACTION')}

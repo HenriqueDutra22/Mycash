@@ -109,18 +109,15 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
             <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] pl-1">Modalidade</label>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { id: 'PIX_SENT', label: 'Pix Enviado', icon: 'payments', type: TransactionType.EXPENSE, method: PaymentMethod.PIX },
-                { id: 'PIX_RECEIVED', label: 'Pix Recebido', icon: 'account_balance', type: TransactionType.INCOME, method: PaymentMethod.PIX },
-                { id: 'DEBIT', label: 'Débito', icon: 'account_balance_wallet', type: TransactionType.EXPENSE, method: PaymentMethod.DEBIT },
-                { id: 'CREDIT', label: 'Crédito', icon: 'credit_card', type: TransactionType.EXPENSE, method: PaymentMethod.CREDIT }
+                { id: 'PIX', label: 'Pix', icon: 'payments', method: PaymentMethod.PIX },
+                { id: 'DEBIT', label: 'Débito', icon: 'account_balance_wallet', method: PaymentMethod.DEBIT },
+                { id: 'CREDIT', label: 'Crédito', icon: 'credit_card', method: PaymentMethod.CREDIT },
+                { id: 'CASH', label: 'Dinheiro', icon: 'money', method: PaymentMethod.CASH }
               ].map(mode => (
                 <button
                   key={mode.id}
-                  onClick={() => {
-                    setPaymentMethod(mode.method);
-                    setType(mode.type);
-                  }}
-                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${paymentMethod === mode.method && (mode.id === 'PIX_SENT' ? type === TransactionType.EXPENSE : mode.id === 'PIX_RECEIVED' ? type === TransactionType.INCOME : true) ? 'bg-white text-black border-white shadow-lg' : 'bg-white/[0.03] border-white/5 text-gray-500'}`}
+                  onClick={() => setPaymentMethod(mode.method)}
+                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${paymentMethod === mode.method ? 'bg-white text-black border-white shadow-lg' : 'bg-white/[0.03] border-white/5 text-gray-500'}`}
                 >
                   <span className="material-symbols-outlined text-xl">{mode.icon}</span>
                   <span className="text-[10px] font-black uppercase tracking-wider">{mode.label}</span>
