@@ -347,16 +347,44 @@ const App: React.FC = () => {
     if (session?.user) {
       try {
         const isIncome = newTx.type === TransactionType.INCOME;
+        const installmentsTotal = newTx.installments?.total || 1;
 
-        // Chamada via RPC com nova assinatura
-        await createTransaction({
-          p_user_id: session.user.id,
-          p_description: newTx.description,
-          p_amount: Math.abs(newTx.amount), // Sempre positivo para o banco
-          p_type: isIncome ? 'credit' : 'debit',
-          p_date: newTx.date,
-          p_category: newTx.category || 'Outros'
-        });
+        if (installmentsTotal > 1) {
+          console.log(`📦 Criando ${installmentsTotal} parcelas para: ${newTx.description}`);
+
+          for (let i = 0; i < installmentsTotal; i++) {
+            const installmentDate = new Date(newTx.date);
+            installmentDate.setMonth(installmentDate.getMonth() + i);
+
+            const formatDate = installmentDate.toISOString().split('T')[0];
+            const installmentDesc = installmentsTotal > 1 ? `${newTx.description} (${i + 1}/${installmentsTotal})` : newTx.description;
+
+            await createTransaction({
+              p_user_id: session.user.id,
+              p_description: installmentDesc,
+              p_amount: Math.abs(newTx.amount / installmentsTotal), // Divide o valor pelas parcelas
+              p_type: isIncome ? 'credit' : 'debit',
+              p_date: formatDate,
+              p_category: newTx.category || 'Outros',
+              p_card_id: newTx.cardId,
+              p_installments_current: i + 1,
+              p_installments_total: installmentsTotal
+            });
+          }
+        } else {
+          // Chamada via RPC com nova assinatura
+          await createTransaction({
+            p_user_id: session.user.id,
+            p_description: newTx.description,
+            p_amount: Math.abs(newTx.amount), // Sempre positivo para o banco
+            p_type: isIncome ? 'credit' : 'debit',
+            p_date: newTx.date,
+            p_category: newTx.category || 'Outros',
+            p_card_id: newTx.cardId,
+            p_installments_current: newTx.installments?.current,
+            p_installments_total: newTx.installments?.total
+          });
+        }
 
         // Recarregar transações e saldo para refletir a mudança
         fetchTransactions(session.user.id);
@@ -604,6 +632,8 @@ const App: React.FC = () => {
           onAddCard={addCard}
           onDeleteCard={deleteCard}
           onBack={() => setCurrentView('HOME')}
+          onAddTransaction={addTransaction}
+          transactions={transactions}
         />;
       case 'PROFILE':
         return <SettingsView
