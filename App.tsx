@@ -202,7 +202,8 @@ const App: React.FC = () => {
       if (data) {
         const formatted = data.map(c => ({
           ...c,
-          lastDigits: c.last_digits
+          lastDigits: c.last_digits,
+          dueDate: c.due_date
         }));
         setCards(formatted);
       }
@@ -307,6 +308,7 @@ const App: React.FC = () => {
           brand: newCard.brand,
           color: newCard.color,
           type: newCard.type,
+          due_date: newCard.dueDate,
           user_id: session.user.id
         };
 
@@ -320,7 +322,8 @@ const App: React.FC = () => {
         if (data) {
           const formatted = {
             ...data,
-            lastDigits: data.last_digits
+            lastDigits: data.last_digits,
+            dueDate: data.due_date
           };
           setCards(prev => [formatted, ...prev]);
           alert('✅ Cartão cadastrado com sucesso!');

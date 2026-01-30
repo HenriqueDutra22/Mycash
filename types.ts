@@ -17,6 +17,7 @@ export interface Card {
   brand: string; // e.g., "Visa", "Mastercard"
   color: string;
   type: 'CREDIT' | 'DEBIT' | 'BOTH';
+  dueDate?: number;
 }
 
 export interface Transaction {

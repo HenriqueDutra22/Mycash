@@ -181,7 +181,12 @@ const NewTransactionView: React.FC<NewTransactionViewProps> = ({ onBack, onSave,
                         <span className="text-[8px] font-black uppercase text-gray-500">{card.brand}</span>
                         <div className={`size-1.5 rounded-full ${cardId === card.id ? 'bg-primary animate-pulse' : 'bg-white/10'}`}></div>
                       </div>
-                      <p className="text-[10px] font-black text-white truncate">{card.name}</p>
+                      <div className="flex justify-between items-end">
+                        <p className="text-[10px] font-black text-white truncate">{card.name}</p>
+                        {card.dueDate && (
+                          <span className="text-[7px] font-black text-white/40 mb-0.5">D{card.dueDate}</span>
+                        )}
+                      </div>
                       <p className="text-[8px] text-gray-500 font-mono">•••• {card.lastDigits}</p>
                     </button>
                   ))}

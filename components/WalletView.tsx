@@ -22,7 +22,8 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
         lastDigits: '',
         brand: 'Visa',
         color: '#19e65e',
-        type: 'BOTH'
+        type: 'BOTH',
+        dueDate: 10
     });
 
     const [purchaseForm, setPurchaseForm] = useState({
@@ -38,7 +39,7 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
         if (!newCard.name || !newCard.lastDigits) return;
         await onAddCard(newCard);
         setShowAddCard(false);
-        setNewCard({ name: '', lastDigits: '', brand: 'Visa', color: '#19e65e', type: 'BOTH' });
+        setNewCard({ name: '', lastDigits: '', brand: 'Visa', color: '#19e65e', type: 'BOTH', dueDate: 10 });
     };
 
     const handleAddPurchase = () => {
@@ -122,7 +123,12 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                     </div>
 
                                     <div className="relative z-10">
-                                        <p className="text-xs font-black uppercase text-white/60 tracking-widest mb-1">{card.name}</p>
+                                        <div className="flex justify-between items-end mb-1">
+                                            <p className="text-xs font-black uppercase text-white/60 tracking-widest">{card.name}</p>
+                                            {card.dueDate && (
+                                                <p className="text-[9px] font-black text-white/50 bg-black/20 px-2 py-0.5 rounded-md uppercase tracking-tighter">Vence dia {card.dueDate}</p>
+                                            )}
+                                        </div>
                                         <div className="flex items-end justify-between">
                                             <p className="text-2xl font-mono font-bold tracking-[0.2em] text-white">•••• {card.lastDigits}</p>
 
@@ -198,7 +204,7 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-4">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Últimos 4 Dígitos</label>
                                     <input
@@ -222,6 +228,18 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                         <option value="Elo">Elo</option>
                                         <option value="Amex">Amex</option>
                                     </select>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Vencimento</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="31"
+                                        value={newCard.dueDate}
+                                        onChange={e => setNewCard({ ...newCard, dueDate: parseInt(e.target.value) || 1 })}
+                                        placeholder="Dia"
+                                        className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold"
+                                    />
                                 </div>
                             </div>
 
