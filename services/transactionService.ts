@@ -25,12 +25,19 @@ export const createTransaction = async (params: CreateTransactionParams) => {
 
         if (error) {
             console.error('❌ Erro RPC insert_transaction:', error);
-            throw error;
+            throw {
+                message: error.message,
+                code: error.code,
+                details: error.details,
+                hint: error.hint,
+                isSupabaseError: true
+            };
         }
 
         return data;
     } catch (error: any) {
-        console.error('❌ Erro inesperado ao criar transação:', error.message);
+        if (error.isSupabaseError) throw error;
+        console.error('❌ Erro inesperado ao criar transação:', error.message || error);
         throw error;
     }
 };

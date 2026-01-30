@@ -365,9 +365,18 @@ const App: React.FC = () => {
         fetchTransactions(session.user.id);
         fetchBalance(session.user.id);
 
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error saving transaction via RPC:', err);
-        alert(`Erro ao salvar transação: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+
+        let errorMsg = 'Erro desconhecido';
+        if (err instanceof Error) {
+          errorMsg = err.message;
+        } else if (typeof err === 'object' && err !== null) {
+          errorMsg = err.message || err.error || JSON.stringify(err);
+          if (err.code) errorMsg += ` (Código: ${err.code})`;
+        }
+
+        alert(`Erro ao salvar transação: ${errorMsg}`);
         const tx = { ...newTx, id: Math.random().toString(36).substr(2, 9) } as Transaction;
         setTransactions([tx, ...transactions]);
       }
@@ -495,9 +504,15 @@ const App: React.FC = () => {
         fetchTransactions(session.user.id);
         fetchBalance(session.user.id);
 
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error in bulk import:', err);
-        alert(`Erro ao importar transações: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+        let errorMsg = 'Erro desconhecido';
+        if (err instanceof Error) {
+          errorMsg = err.message;
+        } else if (typeof err === 'object' && err !== null) {
+          errorMsg = err.message || err.error || JSON.stringify(err);
+        }
+        alert(`Erro ao importar transações: ${errorMsg}`);
       }
     } else {
       // Dev mode fallback
