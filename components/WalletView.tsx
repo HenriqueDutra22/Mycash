@@ -154,16 +154,27 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                         </button>
                                     </div>
 
-                                    {/* Sub-lista de compras se houver */}
-                                    <div className="absolute bottom-0 left-0 w-full px-8 py-2 bg-black/10 backdrop-blur-sm transform translate-y-full group-hover:translate-y-0 transition-transform">
-                                        <div className="flex justify-between items-center h-8">
-                                            <span className="text-[8px] font-black uppercase text-white/40">Últimas Movimentações</span>
-                                            <div className="flex -space-x-1">
-                                                {getCardTransactions(card.id).map((t, i) => (
-                                                    <div key={t.id} className="size-4 rounded-full bg-white/10 flex items-center justify-center border border-white/5" title={t.description}>
-                                                        <span className="material-symbols-outlined text-[10px] text-white/60">{t.icon}</span>
-                                                    </div>
-                                                ))}
+                                    {/* Lista de compras recentes do cartão */}
+                                    <div className="absolute bottom-0 left-0 w-full px-8 py-3 bg-black/40 backdrop-blur-md transform translate-y-full group-hover:translate-y-0 transition-transform border-t border-white/5">
+                                        <div className="flex flex-col gap-2">
+                                            <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Últimas Compras</span>
+                                            <div className="flex flex-col gap-1.5">
+                                                {transactions
+                                                    .filter(t => t.cardId === card.id)
+                                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                    .slice(0, 2)
+                                                    .map((t) => (
+                                                        <div key={t.id} className="flex justify-between items-center">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="material-symbols-outlined text-[10px] text-primary">{t.icon}</span>
+                                                                <span className="text-[9px] font-bold text-white/80 truncate max-w-[100px]">{t.description}</span>
+                                                            </div>
+                                                            <span className="text-[9px] font-black text-white">R$ {Math.abs(t.amount).toLocaleString('pt-BR')}</span>
+                                                        </div>
+                                                    ))}
+                                                {transactions.filter(t => t.cardId === card.id).length === 0 && (
+                                                    <p className="text-[8px] text-white/20 italic">Nenhum lançamento</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

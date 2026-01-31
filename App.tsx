@@ -596,7 +596,7 @@ const App: React.FC = () => {
           cards={cards}
         />;
       case 'ANALYTICS':
-        return <AnalyticsView transactions={historyTransactions} cards={cards} />;
+        return <AnalyticsView transactions={transactions} cards={cards} />;
       case 'TRANSACTIONS':
         return <TransactionsView
           transactions={historyTransactions}

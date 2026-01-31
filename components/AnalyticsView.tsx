@@ -29,6 +29,22 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
     [transactions]
   );
 
+  const cardDetails = useMemo(() => {
+    const details = cards.map(card => {
+      const cardExpenses = transactions
+        .filter(t => t.cardId === card.id && t.paymentMethod === PaymentMethod.CREDIT)
+        .reduce((acc, t) => acc + Math.abs(t.amount || 0), 0);
+
+      const lastPurchases = transactions
+        .filter(t => t.cardId === card.id)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 2);
+
+      return { ...card, totalSpent: cardExpenses, lastPurchases };
+    });
+    return details.sort((a, b) => b.totalSpent - a.totalSpent);
+  }, [transactions, cards]);
+
   const savingsRate = useMemo(() => {
     if (incomes <= 0) return 0;
     const rate = ((incomes - expenses) / incomes) * 100;
@@ -145,18 +161,20 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
         color: "text-primary",
         bg: "bg-primary/10"
       });
-    } else if (cashFlow > 0) {
+    }
+
+    if (creditCardBill > incomes * 0.3) {
       list.push({
-        title: "Potencial de Investimento",
-        desc: "Você tem R$ " + (cashFlow ?? 0).toLocaleString('pt-BR') + " sobrando. Que tal investir?",
-        icon: "trending_up",
-        color: "text-primary",
-        bg: "bg-primary/10"
+        title: "Alerta de Fatura",
+        desc: "Sua fatura de cartão já compromete " + ((creditCardBill / (incomes || 1)) * 100).toFixed(0) + "% da sua renda mensal.",
+        icon: "credit_score",
+        color: "text-orange-400",
+        bg: "bg-orange-400/10"
       });
     }
 
     return list.slice(0, 3);
-  }, [incomes, expenses, cashFlow, savingsRate, chartData]);
+  }, [incomes, expenses, cashFlow, savingsRate, chartData, creditCardBill]);
 
   const maxCategoryVal = Math.max(...categoryTotals.map(c => c.val), 1);
 
@@ -275,6 +293,44 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
             )}
           </div>
         </section>
+
+        {/* Credit Card Detailed Analysis */}
+        {cardDetails.length > 0 && (
+          <section className="flex flex-col gap-4">
+            <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] px-1">Análise por Cartão</h3>
+            <div className="flex flex-col gap-4">
+              {cardDetails.map(card => (
+                <div key={card.id} className="glass bg-[#121814] border border-white/5 p-6 rounded-[32px] relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: card.color }}></div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h4 className="text-sm font-black text-white">{card.name}</h4>
+                      <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mt-0.5">Vencimento dia {card.dueDate || '--'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-white">R$ {card.totalSpent.toLocaleString('pt-BR')}</p>
+                      <p className="text-[8px] text-gray-500 font-black uppercase tracking-tighter">Total Acumulado</p>
+                    </div>
+                  </div>
+
+                  {card.lastPurchases.length > 0 && (
+                    <div className="pt-4 border-t border-white/5 space-y-3">
+                      {card.lastPurchases.map(p => (
+                        <div key={p.id} className="flex justify-between items-center opacity-80">
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-xs text-primary">{p.icon}</span>
+                            <span className="text-[10px] font-bold text-white/70 truncate max-w-[120px]">{p.description}</span>
+                          </div>
+                          <span className="text-[10px] font-black text-white">R$ {Math.abs(p.amount).toLocaleString('pt-BR')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Categories */}
         <section className="flex flex-col gap-4">
