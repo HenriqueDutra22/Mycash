@@ -561,12 +561,17 @@ const App: React.FC = () => {
   };
 
   const displayBalance = useMemo(() => {
-    // Calculamos o saldo ignorando gastos no crédito, para manter o saldo "líquido" (Dinheiro/Pix/Débito)
+    // Agora o saldo ignora COMPLETAMENTE qualquer transação de crédito,
+    // pois compras no cartão são consideradas apenas informativas/dívida futura.
     return transactions.reduce((acc, tx) => {
-      // Se for gasto no crédito, não abate do saldo principal (pois é dívida futura)
-      if (tx.paymentMethod === PaymentMethod.CREDIT && tx.amount < 0) return acc;
+      if (tx.paymentMethod === PaymentMethod.CREDIT) return acc;
       return acc + tx.amount;
     }, 0);
+  }, [transactions]);
+
+  // Transações que aparecem no feed principal (filtramos o crédito)
+  const historyTransactions = useMemo(() => {
+    return transactions.filter(tx => tx.paymentMethod !== PaymentMethod.CREDIT);
   }, [transactions]);
 
   const renderView = () => {
@@ -580,7 +585,7 @@ const App: React.FC = () => {
       case 'HOME':
         return <HomeView
           user={user}
-          transactions={transactions}
+          transactions={historyTransactions}
           dbBalance={displayBalance}
           isGhostMode={isGhostMode}
           setIsGhostMode={setIsGhostMode}
@@ -591,17 +596,17 @@ const App: React.FC = () => {
           cards={cards}
         />;
       case 'ANALYTICS':
-        return <AnalyticsView transactions={transactions} cards={cards} />;
+        return <AnalyticsView transactions={historyTransactions} cards={cards} />;
       case 'TRANSACTIONS':
         return <TransactionsView
-          transactions={transactions}
+          transactions={historyTransactions}
           onBack={() => setCurrentView('HOME')}
           cards={cards}
           onEditTransaction={setEditingTransaction}
         />;
       case 'PLANNING':
         return <PlanningView
-          transactions={transactions}
+          transactions={historyTransactions}
           onAddRecurring={addTransaction}
           onDeleteRecurring={deleteTransaction}
           onConfirmRecurring={addTransaction}
@@ -651,8 +656,8 @@ const App: React.FC = () => {
       default:
         return <HomeView
           user={user}
-          transactions={transactions}
-          dbBalance={dbBalance}
+          transactions={historyTransactions}
+          dbBalance={displayBalance}
           isGhostMode={isGhostMode}
           setIsGhostMode={setIsGhostMode}
           onNewTransaction={() => setCurrentView('NEW_TRANSACTION')}
