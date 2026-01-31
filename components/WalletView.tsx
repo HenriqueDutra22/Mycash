@@ -158,7 +158,9 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                                     <div key={t.id} className="flex justify-between items-center opacity-90">
                                                         <div className="flex items-center gap-2">
                                                             <span className="material-symbols-outlined text-[10px] text-white/70">{t.icon}</span>
-                                                            <span className="text-[9px] font-bold text-white/90 truncate max-w-[140px]">{t.description}</span>
+                                                            <span className="text-[9px] font-bold text-white/90 truncate max-w-[140px]">
+                                                                {t.description} {t.installments && `(${t.installments.current}/${t.installments.total})`}
+                                                            </span>
                                                         </div>
                                                         <span className="text-[9px] font-black text-white">R$ {Math.abs(t.amount).toLocaleString('pt-BR')}</span>
                                                     </div>

@@ -319,7 +319,9 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
                         <div key={p.id} className="flex justify-between items-center opacity-80">
                           <div className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-xs text-primary">{p.icon}</span>
-                            <span className="text-[10px] font-bold text-white/70 truncate max-w-[120px]">{p.description}</span>
+                            <span className="text-[10px] font-bold text-white/70 truncate max-w-[120px]">
+                              {p.description} {p.installments && `(${p.installments.current}/${p.installments.total})`}
+                            </span>
                           </div>
                           <span className="text-[10px] font-black text-white">R$ {Math.abs(p.amount).toLocaleString('pt-BR')}</span>
                         </div>
