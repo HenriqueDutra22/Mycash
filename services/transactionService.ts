@@ -9,6 +9,7 @@ export interface CreateTransactionParams {
     p_date: string;
     p_category?: string;
     p_card_id?: string;
+    p_payment_method?: string;
     p_installments_current?: number;
     p_installments_total?: number;
 }

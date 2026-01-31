@@ -9,6 +9,7 @@ CREATE OR REPLACE FUNCTION insert_transaction(
   p_date DATE,
   p_category TEXT DEFAULT 'Outros',
   p_card_id UUID DEFAULT NULL,
+  p_payment_method TEXT DEFAULT NULL,
   p_installments_current INTEGER DEFAULT 1,
   p_installments_total INTEGER DEFAULT 1
 ) RETURNS JSONB AS $$
@@ -25,6 +26,7 @@ BEGIN
     time,
     category, 
     card_id, 
+    payment_method,
     installments_current, 
     installments_total
   ) VALUES (
@@ -36,6 +38,7 @@ BEGIN
     CURRENT_TIME,
     p_category, 
     p_card_id,
+    p_payment_method,
     p_installments_current, 
     p_installments_total
   ) RETURNING id INTO v_transaction_id;

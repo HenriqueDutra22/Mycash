@@ -24,7 +24,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
 
   const creditCardBill = useMemo(() =>
     transactions
-      .filter(t => t.type === TransactionType.EXPENSE && t.paymentMethod === PaymentMethod.CREDIT)
+      .filter(t => t.type === TransactionType.EXPENSE && t.paymentMethod?.toUpperCase() === PaymentMethod.CREDIT)
       .reduce((acc, t) => acc + Math.abs(t.amount || 0), 0),
     [transactions]
   );
@@ -32,7 +32,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
   const cardDetails = useMemo(() => {
     const details = cards.map(card => {
       const cardExpenses = transactions
-        .filter(t => t.cardId === card.id && t.paymentMethod === PaymentMethod.CREDIT)
+        .filter(t => t.cardId === card.id && t.paymentMethod?.toUpperCase() === PaymentMethod.CREDIT)
         .reduce((acc, t) => acc + Math.abs(t.amount || 0), 0);
 
       const lastPurchases = transactions
@@ -75,7 +75,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
       let label = '';
       let icon = '';
 
-      if (t.paymentMethod === PaymentMethod.PIX) {
+      if (t.paymentMethod?.toUpperCase() === PaymentMethod.PIX) {
         if (t.type === TransactionType.INCOME) {
           key = 'PIX_RECEIVED';
           label = 'Pix Recebido';
@@ -85,11 +85,11 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions, cards }) =>
           label = 'Pix Enviado';
           icon = 'payments';
         }
-      } else if (t.paymentMethod === PaymentMethod.CREDIT) {
+      } else if (t.paymentMethod?.toUpperCase() === PaymentMethod.CREDIT) {
         key = 'CREDIT';
         label = t.cardId ? (cards.find(c => c.id === t.cardId)?.name || 'Cartão de Crédito') : 'Cartão de Crédito';
         icon = 'credit_card';
-      } else if (t.paymentMethod === PaymentMethod.DEBIT) {
+      } else if (t.paymentMethod?.toUpperCase() === PaymentMethod.DEBIT) {
         key = 'DEBIT';
         label = 'Débito / Conta';
         icon = 'account_balance_wallet';

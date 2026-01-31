@@ -148,7 +148,7 @@ const App: React.FC = () => {
           amount: tx.signed_amount,
           // Mapear type do banco ('credit'/'debit') para TransactionType
           type: tx.type === 'credit' ? TransactionType.INCOME : TransactionType.EXPENSE,
-          paymentMethod: tx.payment_method,
+          paymentMethod: tx.payment_method || (tx.card_id ? 'CREDIT' : null),
           cardId: tx.card_id,
           installments: tx.installments_total ? {
             current: tx.installments_current,
@@ -360,6 +360,7 @@ const App: React.FC = () => {
           p_date: newTx.date,
           p_category: newTx.category || 'Outros',
           p_card_id: newTx.cardId,
+          p_payment_method: newTx.paymentMethod,
           p_installments_current: newTx.installments?.current || 1,
           p_installments_total: newTx.installments?.total || 1
         });

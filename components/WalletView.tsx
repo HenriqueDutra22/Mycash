@@ -76,12 +76,9 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
             amount: '0,00',
             category: 'shopping',
             date: new Date().toISOString().split('T')[0],
-            installments: 1
+            installments: 1,
+            type: TransactionType.EXPENSE
         });
-    };
-
-    const getCardTransactions = (cardId: string) => {
-        return transactions.filter(t => t.cardId === cardId).slice(0, 3);
     };
 
     return (
@@ -104,12 +101,8 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                     {cards.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {cards.map((card) => (
-                                <div
-                                    key={card.id}
-                                    className="w-full h-52 rounded-[32px] p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group border border-white/10"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}dd 100%)`,
-                                    }}
+                                <div key={card.id} className="w-full h-auto min-h-[240px] rounded-[32px] p-8 pb-3 flex flex-col justify-between shadow-2xl relative overflow-hidden group border border-white/10"
+                                    style={{ background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}dd 100%)` }}
                                 >
                                     <div className="flex justify-between items-start relative z-10">
                                         <div className="w-12 h-8 bg-white/20 rounded-lg border border-white/30 relative overflow-hidden">
@@ -122,7 +115,7 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                         </div>
                                     </div>
 
-                                    <div className="relative z-10">
+                                    <div className="relative z-10 mt-2">
                                         <div className="flex justify-between items-end mb-1">
                                             <p className="text-xs font-black uppercase text-white/60 tracking-widest">{card.name}</p>
                                             {card.dueDate && (
@@ -131,7 +124,6 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                         </div>
                                         <div className="flex items-end justify-between">
                                             <p className="text-2xl font-mono font-bold tracking-[0.2em] text-white">•••• {card.lastDigits}</p>
-
                                             <button
                                                 onClick={() => {
                                                     setSelectedCardId(card.id);
@@ -145,7 +137,7 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                         </div>
                                     </div>
 
-                                    <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity relative z-20">
+                                    <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                                         <button
                                             onClick={() => onDeleteCard(card.id)}
                                             className="size-10 bg-black/20 rounded-full flex items-center justify-center hover:bg-red-500/40 transition-colors"
@@ -154,28 +146,26 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                         </button>
                                     </div>
 
-                                    {/* Lista de compras recentes do cartão */}
-                                    <div className="absolute bottom-0 left-0 w-full px-8 py-3 bg-black/40 backdrop-blur-md transform translate-y-full group-hover:translate-y-0 transition-transform border-t border-white/5">
-                                        <div className="flex flex-col gap-2">
-                                            <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Últimas Compras</span>
-                                            <div className="flex flex-col gap-1.5">
-                                                {transactions
-                                                    .filter(t => t.cardId === card.id)
-                                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                                    .slice(0, 2)
-                                                    .map((t) => (
-                                                        <div key={t.id} className="flex justify-between items-center">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="material-symbols-outlined text-[10px] text-primary">{t.icon}</span>
-                                                                <span className="text-[9px] font-bold text-white/80 truncate max-w-[100px]">{t.description}</span>
-                                                            </div>
-                                                            <span className="text-[9px] font-black text-white">R$ {Math.abs(t.amount).toLocaleString('pt-BR')}</span>
+                                    {/* Atividade Recente - Visível */}
+                                    <div className="w-full mt-4 pt-3 border-t border-white/10 relative z-10">
+                                        <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Atividade Recente</span>
+                                        <div className="flex flex-col gap-1.5 mt-1 pb-1">
+                                            {transactions
+                                                .filter(t => t.cardId === card.id)
+                                                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                .slice(0, 3)
+                                                .map((t) => (
+                                                    <div key={t.id} className="flex justify-between items-center opacity-90">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-[10px] text-white/70">{t.icon}</span>
+                                                            <span className="text-[9px] font-bold text-white/90 truncate max-w-[140px]">{t.description}</span>
                                                         </div>
-                                                    ))}
-                                                {transactions.filter(t => t.cardId === card.id).length === 0 && (
-                                                    <p className="text-[8px] text-white/20 italic">Nenhum lançamento</p>
-                                                )}
-                                            </div>
+                                                        <span className="text-[9px] font-black text-white">R$ {Math.abs(t.amount).toLocaleString('pt-BR')}</span>
+                                                    </div>
+                                                ))}
+                                            {transactions.filter(t => t.cardId === card.id).length === 0 && (
+                                                <p className="text-[8px] text-white/30 italic">Nenhum lançamento registrado</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -217,7 +207,7 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
 
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Últimos 4 Dígitos</label>
+                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">4 Dígitos</label>
                                     <input
                                         type="text"
                                         maxLength={4}
@@ -248,23 +238,8 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                                         max="31"
                                         value={newCard.dueDate}
                                         onChange={e => setNewCard({ ...newCard, dueDate: parseInt(e.target.value) || 1 })}
-                                        placeholder="Dia"
                                         className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold"
                                     />
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Cor do Cartão</label>
-                                <div className="flex gap-4 p-2">
-                                    {['#19e65e', '#ffffff', '#eb4034', '#4287f5', '#9b42f5', '#f5a442'].map(c => (
-                                        <button
-                                            key={c}
-                                            onClick={() => setNewCard({ ...newCard, color: c })}
-                                            className={`size-12 rounded-full border-4 transition-all ${newCard.color === c ? 'border-primary ring-4 ring-primary/20 bg-white' : 'border-transparent'}`}
-                                            style={{ backgroundColor: c }}
-                                        />
-                                    ))}
                                 </div>
                             </div>
 
@@ -289,101 +264,54 @@ const WalletView: React.FC<WalletViewProps> = ({ cards, onAddCard, onDeleteCard,
                         <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-8">No cartão: {cards.find(c => c.id === selectedCardId)?.name}</p>
 
                         <div className="flex flex-col gap-6">
-                            <div className="flex bg-white/5 p-1 rounded-2xl mb-2 w-full max-w-[200px] mx-auto">
-                                <button
-                                    onClick={() => setPurchaseForm({ ...purchaseForm, type: TransactionType.EXPENSE })}
-                                    className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${purchaseForm.type === TransactionType.EXPENSE ? 'bg-white/10 text-white border border-white/10' : 'text-gray-500'}`}
-                                >
-                                    Saída
-                                </button>
-                                <button
-                                    onClick={() => setPurchaseForm({ ...purchaseForm, type: TransactionType.INCOME })}
-                                    className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${purchaseForm.type === TransactionType.INCOME ? 'bg-primary text-black' : 'text-gray-500'}`}
-                                >
-                                    Entrada
-                                </button>
-                            </div>
-
                             <div className="flex flex-col gap-4">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Descrição</label>
-                                    <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl h-14 px-5 focus-within:border-primary/50 transition-all">
-                                        <span className="material-symbols-outlined text-gray-500">shopping_bag</span>
-                                        <input
-                                            type="text"
-                                            value={purchaseForm.description}
-                                            onChange={e => setPurchaseForm({ ...purchaseForm, description: e.target.value })}
-                                            placeholder="Ex: Supermercado, Amazon..."
-                                            className="flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-white placeholder:text-gray-700"
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        value={purchaseForm.description}
+                                        onChange={e => setPurchaseForm({ ...purchaseForm, description: e.target.value })}
+                                        placeholder="Ex: Supermercado, Amazon..."
+                                        className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold"
+                                    />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Valor</label>
-                                        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl h-14 px-5 focus-within:border-primary/50 transition-all">
-                                            <span className="text-xs font-black text-primary">R$</span>
-                                            <input
-                                                type="text"
-                                                inputMode="numeric"
-                                                value={purchaseForm.amount}
-                                                onChange={e => {
-                                                    const value = e.target.value.replace(/\D/g, '');
-                                                    const numericValue = parseInt(value || '0', 10) / 100;
-                                                    const formatted = numericValue.toLocaleString('pt-BR', {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2
-                                                    });
-                                                    setPurchaseForm({ ...purchaseForm, amount: formatted });
-                                                }}
-                                                className="flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-white"
-                                            />
-                                        </div>
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={purchaseForm.amount}
+                                            onChange={e => {
+                                                const value = e.target.value.replace(/\D/g, '');
+                                                const numericValue = parseInt(value || '0', 10) / 100;
+                                                const formatted = numericValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                setPurchaseForm({ ...purchaseForm, amount: formatted });
+                                            }}
+                                            className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold"
+                                        />
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Parcelas</label>
-                                        <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl h-14 px-5 focus-within:border-primary/50 transition-all">
-                                            <span className="material-symbols-outlined text-gray-500 text-sm">reorder</span>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="48"
-                                                value={purchaseForm.installments}
-                                                onChange={e => setPurchaseForm({ ...purchaseForm, installments: parseInt(e.target.value) || 1 })}
-                                                className="flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-white"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Categoria</label>
-                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                        {CATEGORIES.map(cat => (
-                                            <button
-                                                key={cat.id}
-                                                onClick={() => setPurchaseForm({ ...purchaseForm, category: cat.id })}
-                                                className={`flex-none px-5 py-3 rounded-2xl border transition-all flex items-center gap-2 ${purchaseForm.category === cat.id ? 'bg-primary border-primary text-black shadow-lg shadow-primary/20' : 'bg-white/5 border-white/10 text-gray-500'}`}
-                                            >
-                                                <span className="material-symbols-outlined text-lg">{cat.icon}</span>
-                                                <span className="text-[9px] font-black uppercase tracking-widest">{cat.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Data da Compra</label>
-                                    <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl h-14 px-5 transition-all">
-                                        <span className="material-symbols-outlined text-gray-500">calendar_today</span>
                                         <input
-                                            type="date"
-                                            value={purchaseForm.date}
-                                            onChange={e => setPurchaseForm({ ...purchaseForm, date: e.target.value })}
-                                            className="flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-white [color-scheme:dark]"
+                                            type="number"
+                                            min="1"
+                                            value={purchaseForm.installments}
+                                            onChange={e => setPurchaseForm({ ...purchaseForm, installments: parseInt(e.target.value) || 1 })}
+                                            className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold"
                                         />
                                     </div>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-1">Data</label>
+                                    <input
+                                        type="date"
+                                        value={purchaseForm.date}
+                                        onChange={e => setPurchaseForm({ ...purchaseForm, date: e.target.value })}
+                                        className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold [color-scheme:dark]"
+                                    />
                                 </div>
                             </div>
 
